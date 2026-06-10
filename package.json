@@ -1,0 +1,23 @@
+{
+  "name": "naukri-profile-automation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "run": "node src/naukri-automation.js"
+  },
+  "dependencies": {
+    "@google/genai": "^2.6.0",
+    "@prisma/adapter-better-sqlite3": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "better-sqlite3": "^12.10.0",
+    "dotenv": "^17.4.2",
+    "pdfkit": "^0.18.0",
+    "playwright": "latest",
+    "playwright-extra": "latest",
+    "puppeteer-extra-plugin-stealth": "latest"
+  },
+  "devDependencies": {
+    "prisma": "^7.8.0"
+  }
+}

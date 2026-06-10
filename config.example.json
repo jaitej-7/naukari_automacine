@@ -1,0 +1,71 @@
+{
+  "resume": {
+    "path": "D:\\Naukari automachine\\resume\\Your_Resume.pdf",
+    "uploadEveryRun": true
+  },
+  "profile": {
+    "refreshProfile": true,
+    "headline": "UI/UX Designer | Product Designer | Figma | Web & Mobile Design",
+    "profileSummary": "UI/UX designer focused on product design, user research, wireframes, prototypes, design systems, and responsive web/mobile experiences.",
+    "keySkills": [
+      "UI UX Design",
+      "Product Design",
+      "Figma",
+      "Wireframing",
+      "Prototyping",
+      "Design Systems",
+      "User Research",
+      "Web Design"
+    ]
+  },
+  "jobs": {
+    "maxResultsPerSearch": 25,
+    "minRelevanceScore": 2,
+    "searches": [
+      {
+        "keywords": "UI UX Designer",
+        "location": "Bengaluru",
+        "experienceYears": "1"
+      },
+      {
+        "keywords": "Product Designer",
+        "location": "Remote",
+        "experienceYears": "1"
+      }
+    ],
+    "includeKeywords": [
+      "ui",
+      "ux",
+      "figma",
+      "product design",
+      "wireframe",
+      "prototype",
+      "design system"
+    ],
+    "excludeKeywords": [
+      "sales",
+      "telecaller",
+      "accountant"
+    ]
+  },
+  "applications": {
+    "directApply": false,
+    "createResumeFolderPerJob": true,
+    "defaultStatus": "Not Applied",
+    "statuses": [
+      "Not Applied",
+      "Shortlisted",
+      "Resume Tailored",
+      "Applied",
+      "Rejected",
+      "Interview",
+      "Offer",
+      "Not Relevant"
+    ]
+  },
+  "browser": {
+    "headless": false,
+    "slowMoMs": 120,
+    "manualLoginTimeoutMs": 300000
+  }
+}

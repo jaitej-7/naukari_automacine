@@ -1,0 +1,14 @@
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+out/
+**/out/
+browser-profile/
+reports/
+resume/
+job-resumes/
+.env
+config.json
+database.sqlite
+/src/generated/prisma
