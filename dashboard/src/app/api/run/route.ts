@@ -3,6 +3,8 @@ import { exec } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 
+export const dynamic = 'force-dynamic';
+
 // Track bot run state in a temp file so all requests can read it
 const statusFile = path.join(process.cwd(), '../.bot-status.json');
 
@@ -22,10 +24,20 @@ export async function GET() {
   return NextResponse.json(readStatus());
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   const current = readStatus();
   if (current.running) {
     return NextResponse.json({ message: 'Bot is already running' }, { status: 409 });
+  }
+
+  let headlessOverride: boolean | null = null;
+  try {
+    const body = await request.json();
+    if (body && typeof body.headless === 'boolean') {
+      headlessOverride = body.headless;
+    }
+  } catch {
+    // No request body or invalid JSON
   }
 
   const scriptPath = path.join(process.cwd(), '../src/naukri-automation.js');
@@ -33,7 +45,12 @@ export async function POST() {
 
   writeStatus({ running: true, lastRun: new Date().toISOString(), pid: null, log: 'Starting bot...' });
 
-  const child = exec(`node "${scriptPath}"`, { cwd }, (error, stdout, stderr) => {
+  let cmd = `node "${scriptPath}"`;
+  if (headlessOverride !== null) {
+    cmd += headlessOverride ? ' --headless' : ' --headful';
+  }
+
+  const child = exec(cmd, { cwd }, (error, stdout, stderr) => {
     const log = stdout || stderr || (error ? error.message : 'Done');
     writeStatus({
       running: false,

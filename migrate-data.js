@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
-import { PrismaClient } from '@prisma/client';
+import prismaClientPkg from '@prisma/client';
+const { PrismaClient } = prismaClientPkg;
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import fs from 'fs/promises';
 import path from 'path';
@@ -14,29 +15,34 @@ async function migrateConfig() {
     const rawConfig = await fs.readFile(path.join(process.cwd(), 'config.json'), 'utf8');
     const config = JSON.parse(rawConfig);
     
+    const configData = {
+      resumePath: config.resume?.path || '',
+      uploadEveryRun: config.resume?.uploadEveryRun ?? true,
+      refreshProfile: config.profile?.refreshProfile ?? true,
+      headline: config.profile?.headline,
+      profileSummary: config.profile?.profileSummary,
+      keySkills: JSON.stringify(config.profile?.keySkills || []),
+      maxResultsPerSearch: config.jobs?.maxResultsPerSearch ?? 25,
+      minRelevanceScore: config.jobs?.minRelevanceScore ?? 2,
+      searches: JSON.stringify(config.jobs?.searches || []),
+      includeKeywords: JSON.stringify(config.jobs?.includeKeywords || []),
+      excludeKeywords: JSON.stringify(config.jobs?.excludeKeywords || []),
+      directApply: config.applications?.directApply ?? true,
+      createResumeFolder: config.applications?.createResumeFolderPerJob ?? true,
+      defaultStatus: config.applications?.defaultStatus || 'Not Applied',
+      qaMemory: JSON.stringify(config.applications?.qaMemory || {}),
+      statuses: JSON.stringify(config.applications?.statuses || []),
+      headless: config.browser?.headless ?? true,
+      slowMoMs: config.browser?.slowMoMs ?? 120,
+      manualLoginTimeoutMs: config.browser?.manualLoginTimeoutMs ?? 300000
+    };
+
     await prisma.configuration.upsert({
       where: { id: 1 },
-      update: {},
+      update: configData,
       create: {
-        resumePath: config.resume?.path || '',
-        uploadEveryRun: config.resume?.uploadEveryRun ?? true,
-        refreshProfile: config.profile?.refreshProfile ?? true,
-        headline: config.profile?.headline,
-        profileSummary: config.profile?.profileSummary,
-        keySkills: JSON.stringify(config.profile?.keySkills || []),
-        maxResultsPerSearch: config.jobs?.maxResultsPerSearch ?? 25,
-        minRelevanceScore: config.jobs?.minRelevanceScore ?? 2,
-        searches: JSON.stringify(config.jobs?.searches || []),
-        includeKeywords: JSON.stringify(config.jobs?.includeKeywords || []),
-        excludeKeywords: JSON.stringify(config.jobs?.excludeKeywords || []),
-        directApply: config.applications?.directApply ?? true,
-        createResumeFolder: config.applications?.createResumeFolderPerJob ?? true,
-        defaultStatus: config.applications?.defaultStatus || 'Not Applied',
-        qaMemory: JSON.stringify(config.applications?.qaMemory || {}),
-        statuses: JSON.stringify(config.applications?.statuses || []),
-        headless: config.browser?.headless ?? true,
-        slowMoMs: config.browser?.slowMoMs ?? 120,
-        manualLoginTimeoutMs: config.browser?.manualLoginTimeoutMs ?? 300000
+        id: 1,
+        ...configData
       }
     });
     console.log('Migrated configuration.');

@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { tailorResume } from './resume-tailor.js';
 import Database from 'better-sqlite3';
-import { PrismaClient } from '@prisma/client';
+import prismaClientPkg from '@prisma/client';
+const { PrismaClient } = prismaClientPkg;
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -95,10 +96,11 @@ function slugify(value) {
     .replace(/^-+|-+$/g, '');
 }
 
-function buildSearchUrl(search) {
+function buildSearchUrl(search, page = 1) {
   const keywordSlug = slugify(search.keywords);
   const locationSlug = slugify(search.location || 'india');
-  const url = new URL(`https://www.naukri.com/${keywordSlug}-jobs-in-${locationSlug}`);
+  const pathSuffix = page > 1 ? `-${page}` : '';
+  const url = new URL(`https://www.naukri.com/${keywordSlug}-jobs-in-${locationSlug}${pathSuffix}`);
 
   if (search.experienceYears !== undefined && search.experienceYears !== '') {
     url.searchParams.set('experience', String(search.experienceYears));
@@ -226,6 +228,7 @@ async function mergeIntoApplicationTracker(jobs, config, log) {
       lastSeenAt: new Date().toISOString(),
       jobKey,
       description: job.description || '',
+      posted: job.postedText || '',
       notes: ''
     };
 
@@ -391,9 +394,9 @@ async function lightProfileRefresh(page, config, log) {
   }
 
   const editableSections = [
-    { label: /resume headline|headline/i, value: config.profile.headline },
-    { label: /profile summary|summary/i, value: config.profile.profileSummary },
-    { label: /key skills|skills/i, value: Array.isArray(config.profile.keySkills) ? config.profile.keySkills.join(', ') : '' }
+    { name: 'Resume Headline', label: /resume headline|headline/i, value: config.profile.headline },
+    { name: 'Profile Summary', label: /profile summary|summary/i, value: config.profile.profileSummary },
+    { name: 'Key Skills', label: /key skills|skills/i, value: Array.isArray(config.profile.keySkills) ? config.profile.keySkills.join(', ') : '' }
   ].filter((item) => item.value);
 
   for (const section of editableSections) {
@@ -401,7 +404,7 @@ async function lightProfileRefresh(page, config, log) {
     const found = await editButtons.count().catch(() => 0);
     if (found === 0) continue;
 
-    log.actions.push(`Profile section visible for refresh: ${section.label}`);
+    log.actions.push(`Profile section visible for refresh: ${section.name}`);
   }
 
   await page.mouse.wheel(0, 600);
@@ -414,88 +417,113 @@ async function scrapeJobs(page, config, log) {
   const seen = new Set();
   const searches = config.jobs?.searches || [];
 
+  const maxResults = config.jobs?.maxResultsPerSearch || 25;
+  const maxPages = Math.max(1, Math.ceil(maxResults / 20));
+
   for (const search of searches) {
-    const searchUrl = buildSearchUrl(search);
-    await page.goto(searchUrl, { waitUntil: 'domcontentloaded' });
-    try {
-      await page.waitForSelector('article.jobTuple, .srp-jobtuple-wrapper, .jobTuple, .cust-job-tuple', { state: 'attached', timeout: 15000 });
-    } catch {}
+    let searchJobs = [];
+    const maxAgeDays = search.maxAgeDays;
+    let skippedOldCount = 0;
+    let skippedNoDateCount = 0;
 
-    const jobs = await page.evaluate((maxResults) => {
-      const selectors = [
-        '.srp-jobtuple-wrapper',
-        'article.jobTuple',
-        '.jobTuple',
-        '.cust-job-tuple'
-      ];
-      const cards = selectors.flatMap((selector) => Array.from(document.querySelectorAll(selector)));
-      const uniqueCards = Array.from(new Set(cards)).slice(0, maxResults);
+    for (let currentPage = 1; currentPage <= maxPages; currentPage++) {
+      if (searchJobs.length >= maxResults) break;
 
-      return uniqueCards.map((card) => {
-        const link = card.querySelector('a[href*="/job-listings"], a.title, a');
-        const title = card.querySelector('.title, .jobTitle, a[href*="/job-listings"]')?.textContent?.trim() || link?.textContent?.trim() || '';
-        const company = card.querySelector('.comp-name, .companyName, .subTitle')?.textContent?.trim() || '';
-        const location = card.querySelector('.locWdth, .location, .loc')?.textContent?.trim() || '';
-        const experience = card.querySelector('.expwdth, .experience, .exp')?.textContent?.trim() || '';
-        const salary = card.querySelector('.sal-wrap, .salary, .sal')?.textContent?.trim() || '';
-        const description = card.querySelector('.job-desc, .job-description, .jobDesc')?.textContent?.trim() || '';
-        // Scrape the posted date text e.g. "1 Day Ago", "3 Days Ago", "Just Now"
-        const postedText = card.querySelector('.job-post-day, .postDate, [class*="post-day"], [class*="postDate"]')?.textContent?.trim() || '';
+      const searchUrl = buildSearchUrl(search, currentPage);
+      const pageJobs = await page.goto(searchUrl, { waitUntil: 'domcontentloaded' }).then(async () => {
+        try {
+          await page.waitForSelector('article.jobTuple, .srp-jobtuple-wrapper, .jobTuple, .cust-job-tuple', { state: 'attached', timeout: 5000 });
+        } catch {}
 
-        return {
-          title,
-          company,
-          location,
-          experience,
-          salary,
-          description,
-          postedText,
-          url: link?.href || ''
-        };
-      }).filter((job) => job.title || job.company || job.url);
-    }, config.jobs?.maxResultsPerSearch || 25);
+        return page.evaluate((maxResultsToGet) => {
+          const selectors = [
+            '.srp-jobtuple-wrapper',
+            'article.jobTuple',
+            '.jobTuple',
+            '.cust-job-tuple'
+          ];
+          const cards = selectors.flatMap((selector) => Array.from(document.querySelectorAll(selector)));
+          const uniqueCards = Array.from(new Set(cards)).slice(0, maxResultsToGet);
 
-    const maxAgeDays = search.maxAgeDays || 30;
+          return uniqueCards.map((card) => {
+            const link = card.querySelector('a[href*="/job-listings"], a.title, a');
+            const title = card.querySelector('.title, .jobTitle, a[href*="/job-listings"]')?.textContent?.trim() || link?.textContent?.trim() || '';
+            const company = card.querySelector('.comp-name, .companyName, .subTitle')?.textContent?.trim() || '';
+            const location = card.querySelector('.locWdth, .location, .loc')?.textContent?.trim() || '';
+            const experience = card.querySelector('.expwdth, .experience, .exp')?.textContent?.trim() || '';
+            const salary = card.querySelector('.sal-wrap, .salary, .sal')?.textContent?.trim() || '';
+            const description = card.querySelector('.job-desc, .job-description, .jobDesc')?.textContent?.trim() || '';
+            const postedText = card.querySelector('.job-post-day, .postDate, [class*="post-day"], [class*="postDate"]')?.textContent?.trim() || '';
 
-    for (const job of jobs) {
-      const key = job.url || `${job.title}-${job.company}-${job.location}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
+            return {
+              title,
+              company,
+              location,
+              experience,
+              salary,
+              description,
+              postedText,
+              url: link?.href || ''
+            };
+          }).filter((job) => job.title || job.company || job.url);
+        }, maxResults - searchJobs.length);
+      }).catch((err) => {
+        console.error(`Error loading page ${currentPage}:`, err.message);
+        return [];
+      });
 
-      // Strict freshness filter
-      if (job.postedText) {
-        const text = job.postedText.toLowerCase();
-        const isFresh =
-          text.includes('just now') ||
-          text.includes('few hours') ||
-          text.includes('today') ||
-          text.match(/^(\d+)\s*hour/) ||
-          (text.match(/(\d+)\s*day/) && parseInt(text.match(/(\d+)\s*day/)[1]) <= maxAgeDays);
-
-        if (!isFresh) {
-          log.actions.push(`Skipped old job (${job.postedText}): ${job.title} @ ${job.company}`);
-          continue;
-        }
-      } else if (maxAgeDays <= 1) {
-        // If we can't read the date and filter is strict (1 day), skip to be safe
-        log.actions.push(`Skipped (no date found, strict mode): ${job.title} @ ${job.company}`);
-        continue;
+      if (!pageJobs || pageJobs.length === 0) {
+        break; // No more results or navigation failed
       }
 
+      for (const job of pageJobs) {
+        const key = job.url || `${job.title}-${job.company}-${job.location}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
 
-      const score = relevanceScore(job, config.jobs?.includeKeywords, config.jobs?.excludeKeywords);
-      if (score >= (config.jobs?.minRelevanceScore ?? 1)) {
-        allJobs.push({
-          ...job,
-          relevanceScore: score,
-          searchKeywords: search.keywords,
-          searchLocation: search.location,
-          capturedAt: new Date().toISOString()
-        });
+        // Strict freshness filter
+        if (maxAgeDays !== undefined && maxAgeDays !== null) {
+          if (job.postedText) {
+            const text = job.postedText.toLowerCase();
+            const isFresh =
+              text.includes('just now') ||
+              text.includes('few hours') ||
+              text.includes('today') ||
+              text.match(/^(\d+)\s*hour/) ||
+              (text.match(/(\d+)\s*day/) && parseInt(text.match(/(\d+)\s*day/)[1]) <= maxAgeDays);
+
+            if (!isFresh) {
+              skippedOldCount++;
+              continue;
+            }
+          } else if (maxAgeDays <= 1) {
+            skippedNoDateCount++;
+            continue;
+          }
+        }
+
+        const score = relevanceScore(job, config.jobs?.includeKeywords, config.jobs?.excludeKeywords);
+        if (score >= (config.jobs?.minRelevanceScore ?? 1)) {
+          const jobObj = {
+            ...job,
+            relevanceScore: score,
+            searchKeywords: search.keywords,
+            searchLocation: search.location,
+            capturedAt: new Date().toISOString()
+          };
+          allJobs.push(jobObj);
+          searchJobs.push(jobObj);
+        }
       }
     }
 
-    log.actions.push(`Scraped ${jobs.length} jobs for "${search.keywords}" in "${search.location}" (max ${maxAgeDays}d old).`);
+    log.actions.push(`Scraped ${searchJobs.length} jobs for "${search.keywords}" in "${search.location}".`);
+    if (skippedOldCount > 0) {
+      log.actions.push(`Skipped ${skippedOldCount} older listings (posted ${maxAgeDays}+ days ago).`);
+    }
+    if (skippedNoDateCount > 0) {
+      log.actions.push(`Skipped ${skippedNoDateCount} listings with no readable date.`);
+    }
   }
 
   return allJobs.sort((a, b) => b.relevanceScore - a.relevanceScore);
@@ -736,7 +764,7 @@ async function notifyWebhook(payload) {
   }
 }
 
-async function notifyDiscordSummary(jobs, appliedCount, strongMatches, warnings, trackerTotal) {
+async function notifyDiscordSummary(jobs, appliedCount, strongMatches, actions, warnings, trackerTotal) {
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
   if (!webhookUrl) return;
 
@@ -752,6 +780,17 @@ async function notifyDiscordSummary(jobs, appliedCount, strongMatches, warnings,
     inline: false
   }));
 
+  let actionSummary = '';
+  for (const act of actions || []) {
+    const nextLine = `• ${act}\n`;
+    if ((actionSummary + nextLine).length > 950) {
+      actionSummary += '• ... and more actions\n';
+      break;
+    }
+    actionSummary += nextLine;
+  }
+  if (!actionSummary) actionSummary = 'No actions recorded';
+
   const color = strongMatches.length > 0 ? 0x22c55e : 0x6366f1;
 
   const payload = {
@@ -765,6 +804,7 @@ async function notifyDiscordSummary(jobs, appliedCount, strongMatches, warnings,
         { name: '📊 Total Tracked', value: String(trackerTotal), inline: true },
         { name: '⚠️ Warnings', value: String(warnings.length), inline: true },
         { name: '\u200b', value: '\u200b', inline: true },
+        { name: '📋 Bot Flow & Actions', value: actionSummary, inline: false },
         ...(matchFields.length > 0 ? [{ name: '🏆 Top Strong Matches', value: '\u200b', inline: false }, ...matchFields] : [])
       ],
       timestamp: new Date().toISOString(),
@@ -794,6 +834,27 @@ async function writeReports(jobs, log) {
   });
 }
 
+async function updateBotStatus(running, logMessage = '') {
+  try {
+    const statusFilePath = path.join(rootDir, '.bot-status.json');
+    let current = {};
+    try {
+      const content = await fs.readFile(statusFilePath, 'utf8');
+      current = JSON.parse(content);
+    } catch {}
+
+    const status = {
+      running,
+      lastRun: new Date().toISOString(),
+      pid: running ? process.pid : null,
+      log: logMessage || current.log || ''
+    };
+    await fs.writeFile(statusFilePath, JSON.stringify(status, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Failed to update bot status file:', err.message);
+  }
+}
+
 async function main() {
   await ensureDirs();
   await loadLocalEnv();
@@ -809,14 +870,23 @@ async function main() {
     return;
   }
 
+  await updateBotStatus(true, 'Bot started...');
+
   const log = {
     startedAt: new Date().toISOString(),
     actions: [],
     warnings: []
   };
 
+  let headless = Boolean(config.browser?.headless);
+  if (process.argv.includes('--headless')) {
+    headless = true;
+  } else if (process.argv.includes('--headful')) {
+    headless = false;
+  }
+
   const context = await chromium.launchPersistentContext(profileDir, {
-    headless: Boolean(config.browser?.headless),
+    headless: headless,
     slowMo: config.browser?.slowMoMs ?? 0,
     viewport: { width: 1366, height: 900 }
   });
@@ -921,10 +991,11 @@ async function main() {
     await writeReports(jobs, log);
 
     // Send rich Discord embed summary
-    await notifyDiscordSummary(jobs, appliedCount, strongMatches, log.warnings, trackerRows.length);
+    await notifyDiscordSummary(jobs, appliedCount, strongMatches, log.actions, log.warnings, trackerRows.length);
 
     console.log(`Done. Relevant jobs found: ${jobs.length}`);
     console.log(`Report: ${path.join(reportsDir, 'jobs-latest.csv')}`);
+    await updateBotStatus(false, `Done. Relevant jobs found: ${jobs.length}\nReport: ${path.join(reportsDir, 'jobs-latest.csv')}`);
   } finally {
     await context.close();
   }
@@ -946,6 +1017,17 @@ main().catch(async (error) => {
   } catch (dbError) {
     console.error('Failed to write error to DB:', dbError);
   }
+
+  try {
+    const statusFilePath = path.join(rootDir, '.bot-status.json');
+    const status = {
+      running: false,
+      lastRun: new Date().toISOString(),
+      pid: null,
+      log: `Error: ${error.message}`
+    };
+    await fs.writeFile(statusFilePath, JSON.stringify(status, null, 2), 'utf8');
+  } catch {}
   
   console.error(error);
   process.exitCode = 1;

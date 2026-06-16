@@ -1,6 +1,6 @@
 {
   "running": false,
-  "lastRun": "2026-06-10T08:25:04.457Z",
+  "lastRun": "2026-06-16T07:20:07.151Z",
   "pid": null,
-  "log": "plying to JOB-0070 (Ownpath Learning - score: 3)...\nAuto-applying to JOB-0090 (Smartsoft - score: 2)...\nAuto-applying to JOB-0094 (Dhan & Co - score: 2)...\nAuto-applying to JOB-0100 (Prgeeq Global Solutions - score: 2)...\nAuto-applying to JOB-0113 (Ionage - score: 2)...\nAuto-applying to JOB-0122 (Squapl Digital Media Technologies (opc) - score: 2)...\nAuto-applying to JOB-0125 (Inceptory Technology - score: 2)...\nDone. Relevant jobs found: 3\nReport: D:\\Naukari automachine\\reports\\jobs-latest.csv\n"
+  "log": "onfigured resume.\nStarting resume upload. Current URL: https://www.naukri.com/mnjuser/profile\nNavigating to profile page...\nAfter navigation & wait. URL: https://www.naukri.com/mnjuser/profile, Title: Profile | Mynaukri\nWaiting for input[type=\"file\"]#attachCV...\nFound #attachCV element. Setting file...\nResume upload completed successfully!\nRefreshing profile activity.\nSearching relevant jobs.\nUpdating application tracker.\nDone. Relevant jobs found: 19\nReport: D:\\hunter.1\\reports\\jobs-latest.csv\n"
 }

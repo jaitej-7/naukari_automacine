@@ -20,7 +20,10 @@ export default function SettingsPage() {
       .then(res => res.json())
       .then(data => {
         if (data) {
-          setConfig(data);
+          setConfig({
+            headless: data.browser?.headless ?? true,
+            keywords: data.jobs?.includeKeywords ?? []
+          });
         }
         setLoading(false);
       })
@@ -69,12 +72,12 @@ export default function SettingsPage() {
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-  };
+  } as const;
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
-  };
+    visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
+  } as const;
 
   return (
     <motion.div 

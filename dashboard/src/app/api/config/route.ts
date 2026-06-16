@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import Database from 'better-sqlite3';
 import { PrismaClient } from '@prisma/client';
 import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import path from 'path';
+
+export const dynamic = 'force-dynamic';
 
 function getPrisma() {
   const dbPath = path.join(process.cwd(), '../database.sqlite');
@@ -66,26 +67,41 @@ export async function POST(request: Request) {
     const body = await request.json();
     prisma = getPrisma();
 
+    // Fetch existing configuration to merge
+    const existing = await prisma.configuration.findUnique({ where: { id: 1 } });
+
     const dataToSave = {
-      resumePath: body.resume?.path || '',
-      uploadEveryRun: body.resume?.uploadEveryRun ?? true,
-      refreshProfile: body.profile?.refreshProfile ?? true,
-      headline: body.profile?.headline || '',
-      profileSummary: body.profile?.profileSummary || '',
-      keySkills: JSON.stringify(body.profile?.keySkills || []),
-      maxResultsPerSearch: body.jobs?.maxResultsPerSearch || 25,
-      minRelevanceScore: body.jobs?.minRelevanceScore || 2,
-      searches: JSON.stringify(body.jobs?.searches || []),
-      includeKeywords: JSON.stringify(body.jobs?.includeKeywords || []),
-      excludeKeywords: JSON.stringify(body.jobs?.excludeKeywords || []),
-      directApply: body.applications?.directApply ?? true,
-      createResumeFolder: body.applications?.createResumeFolderPerJob ?? true,
-      defaultStatus: body.applications?.defaultStatus || 'Not Applied',
-      qaMemory: JSON.stringify(body.applications?.qaMemory || {}),
-      statuses: JSON.stringify(body.applications?.statuses || '["Not Applied", "Applied", "Rejected", "Interviewing"]'),
-      headless: body.browser?.headless ?? true,
-      slowMoMs: body.browser?.slowMoMs || 120,
-      manualLoginTimeoutMs: body.browser?.manualLoginTimeoutMs || 300000
+      resumePath: body.resume?.path ?? existing?.resumePath ?? '',
+      uploadEveryRun: body.resume?.uploadEveryRun ?? existing?.uploadEveryRun ?? true,
+      refreshProfile: body.profile?.refreshProfile ?? existing?.refreshProfile ?? true,
+      headline: body.profile?.headline ?? existing?.headline ?? '',
+      profileSummary: body.profile?.profileSummary ?? existing?.profileSummary ?? '',
+      keySkills: body.profile?.keySkills 
+        ? JSON.stringify(body.profile.keySkills) 
+        : (existing?.keySkills || '[]'),
+      maxResultsPerSearch: body.jobs?.maxResultsPerSearch ?? existing?.maxResultsPerSearch ?? 25,
+      minRelevanceScore: body.jobs?.minRelevanceScore ?? existing?.minRelevanceScore ?? 2,
+      searches: body.jobs?.searches 
+        ? JSON.stringify(body.jobs.searches) 
+        : (existing?.searches || '[]'),
+      includeKeywords: body.jobs?.includeKeywords 
+        ? JSON.stringify(body.jobs.includeKeywords) 
+        : (Array.isArray(body.keywords) ? JSON.stringify(body.keywords) : (existing?.includeKeywords || '[]')),
+      excludeKeywords: body.jobs?.excludeKeywords 
+        ? JSON.stringify(body.jobs.excludeKeywords) 
+        : (existing?.excludeKeywords || '[]'),
+      directApply: body.applications?.directApply ?? existing?.directApply ?? true,
+      createResumeFolder: body.applications?.createResumeFolderPerJob ?? existing?.createResumeFolder ?? true,
+      defaultStatus: body.applications?.defaultStatus ?? existing?.defaultStatus ?? 'Not Applied',
+      qaMemory: body.applications?.qaMemory 
+        ? JSON.stringify(body.applications.qaMemory) 
+        : (existing?.qaMemory || '{}'),
+      statuses: body.applications?.statuses 
+        ? JSON.stringify(body.applications.statuses) 
+        : (existing?.statuses || '["Not Applied", "Applied", "Rejected", "Interviewing"]'),
+      headless: body.browser?.headless ?? (typeof body.headless === 'boolean' ? body.headless : (existing?.headless ?? true)),
+      slowMoMs: body.browser?.slowMoMs ?? existing?.slowMoMs ?? 120,
+      manualLoginTimeoutMs: body.browser?.manualLoginTimeoutMs ?? existing?.manualLoginTimeoutMs ?? 300000
     };
 
     await prisma.configuration.upsert({

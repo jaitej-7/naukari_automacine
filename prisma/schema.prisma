@@ -29,6 +29,7 @@ model Job {
   notes          String?
   jobKey         String   @unique
   description    String?
+  posted         String?
 }
 
 model RunLog {

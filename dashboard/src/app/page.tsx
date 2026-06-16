@@ -13,8 +13,20 @@ type Job = {
   relevanceScore: number;
   appliedAt?: string;
   capturedAt?: string;
+  lastSeenAt?: string;
   url?: string;
   matchDecision?: string;
+  posted?: string;
+};
+
+type RunLog = {
+  id: string;
+  startedAt: string;
+  finishedAt?: string;
+  jobCount: number;
+  trackerCount: number;
+  actions: string[];
+  warnings: string[];
 };
 
 type BotStatus = {
@@ -26,14 +38,18 @@ type BotStatus = {
 
 export default function Dashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [runLogs, setRunLogs] = useState<RunLog[]>([]);
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [botStatus, setBotStatus] = useState<BotStatus>({ running: false, lastRun: null, pid: null });
   const [loading, setLoading] = useState(true);
+  const [showBrowser, setShowBrowser] = useState(false);
 
   const fetchJobs = useCallback(async () => {
     try {
       const res = await fetch("/api/jobs");
       const data = await res.json().catch(() => ({}));
       setJobs(Array.isArray(data?.tracker) ? data.tracker : []);
+      setRunLogs(Array.isArray(data?.runLog) ? data.runLog : []);
     } finally {
       setLoading(false);
     }
@@ -52,6 +68,18 @@ export default function Dashboard() {
     fetchBotStatus();
   }, [fetchJobs, fetchBotStatus]);
 
+  // Load browser headless/headful configuration on mount
+  useEffect(() => {
+    fetch("/api/config")
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.browser) {
+          setShowBrowser(!data.browser.headless);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Poll bot status every 5 seconds
   useEffect(() => {
     const interval = setInterval(fetchBotStatus, 5000);
@@ -69,7 +97,11 @@ export default function Dashboard() {
     if (botStatus.running) return;
     setBotStatus(s => ({ ...s, running: true }));
     try {
-      await fetch("/api/run", { method: "POST" });
+      await fetch("/api/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ headless: !showBrowser })
+      });
     } catch {}
   };
 
@@ -80,12 +112,12 @@ export default function Dashboard() {
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
-  };
+  } as const;
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
-  };
+    visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
+  } as const;
 
   const formatDate = (iso?: string) => {
     if (!iso) return '—';
@@ -114,28 +146,46 @@ export default function Dashboard() {
           </h1>
           <p className="text-muted-foreground mt-1 text-base">Monitor your automated job applications in real-time.</p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={runBot}
-          disabled={botStatus.running}
-          className="relative group inline-flex items-center justify-center rounded-xl bg-primary px-8 py-3.5 text-sm font-semibold text-primary-foreground transition-all focus-visible:outline-none disabled:opacity-60 disabled:pointer-events-none shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_30px_rgba(99,102,241,0.6)] overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
-          <span className="relative flex items-center gap-2">
-            {botStatus.running ? (
-              <>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                <span>Bot Running...</span>
-              </>
-            ) : (
-              <>
-                <Zap className="h-4 w-4" />
-                <span>Initialize Bot</span>
-              </>
-            )}
-          </span>
-        </motion.button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          {/* Show/Hide Browser Toggle */}
+          <div className="flex items-center justify-between gap-3 bg-muted/20 border border-border/30 px-4 py-2.5 rounded-xl backdrop-blur-md transition-colors hover:bg-muted/30">
+            <span className="text-sm font-medium whitespace-nowrap">Show Browser</span>
+            <button
+              type="button"
+              disabled={botStatus.running}
+              onClick={() => setShowBrowser(!showBrowser)}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-all focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${showBrowser ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+            >
+              <span className="sr-only">Toggle Show Browser</span>
+              <span
+                className={`pointer-events-none block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform ${showBrowser ? 'translate-x-5' : 'translate-x-0'}`}
+              />
+            </button>
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={runBot}
+            disabled={botStatus.running}
+            className="relative group inline-flex items-center justify-center rounded-xl bg-primary px-8 py-3.5 text-sm font-semibold text-primary-foreground transition-all focus-visible:outline-none disabled:opacity-60 disabled:pointer-events-none shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_30px_rgba(99,102,241,0.6)] overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+            <span className="relative flex items-center gap-2">
+              {botStatus.running ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  <span>Bot Running...</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="h-4 w-4" />
+                  <span>Initialize Bot</span>
+                </>
+              )}
+            </span>
+          </motion.button>
+        </div>
       </motion.div>
 
       {/* Live Bot Status Banner */}
@@ -193,95 +243,211 @@ export default function Dashboard() {
         ))}
       </motion.div>
 
-      {/* Jobs Table */}
-      <motion.div variants={itemVariants} className="glass-panel rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-border/40 bg-muted/10 flex items-center justify-between">
-          <h3 className="font-semibold text-base flex items-center gap-2">
-            <FileText className="h-4 w-4 text-primary" /> Recent Job Activity
-          </h3>
-          <span className="text-xs text-muted-foreground">{jobs.length} jobs tracked</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="text-muted-foreground border-b border-border/40 bg-muted/5">
-              <tr>
-                <th className="px-5 py-3.5 font-semibold uppercase tracking-wider text-xs">Job Title</th>
-                <th className="px-5 py-3.5 font-semibold uppercase tracking-wider text-xs">Company</th>
-                <th className="px-5 py-3.5 font-semibold uppercase tracking-wider text-xs hidden md:table-cell">Location</th>
-                <th className="px-5 py-3.5 font-semibold uppercase tracking-wider text-xs hidden md:table-cell">Captured</th>
-                <th className="px-5 py-3.5 font-semibold uppercase tracking-wider text-xs text-center">Score</th>
-                <th className="px-5 py-3.5 font-semibold uppercase tracking-wider text-xs">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/30">
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i}>
-                    {Array.from({ length: 6 }).map((_, j) => (
-                      <td key={j} className="px-5 py-4">
-                        <div className="h-4 rounded bg-muted animate-pulse" style={{ width: `${60 + Math.random() * 40}%` }} />
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : jobs.length === 0 ? (
+      {/* Main Grid: Jobs and Run Logs */}
+      <motion.div variants={itemVariants} className="grid gap-6 lg:grid-cols-3">
+        {/* Jobs Table (Left 2 columns) */}
+        <div className="lg:col-span-2 glass-panel rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-border/40 bg-muted/10 flex items-center justify-between">
+            <h3 className="font-semibold text-base flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" /> Recent Job Activity
+            </h3>
+            <span className="text-xs text-muted-foreground">{jobs.length} jobs tracked</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-muted-foreground border-b border-border/40 bg-muted/5">
                 <tr>
-                  <td colSpan={6} className="px-5 py-16 text-center text-muted-foreground">
-                    <div className="flex flex-col items-center gap-3">
-                      <AlertTriangle className="h-8 w-8 opacity-30" />
-                      <p>No jobs found. Initialize the bot to start discovering opportunities.</p>
-                    </div>
-                  </td>
+                  <th className="px-5 py-3.5 font-semibold uppercase tracking-wider text-xs">Job Title</th>
+                  <th className="px-5 py-3.5 font-semibold uppercase tracking-wider text-xs">Company</th>
+                  <th className="px-5 py-3.5 font-semibold uppercase tracking-wider text-xs hidden md:table-cell">Location</th>
+                  <th className="px-5 py-3.5 font-semibold uppercase tracking-wider text-xs hidden md:table-cell">Posted</th>
+                  <th className="px-5 py-3.5 font-semibold uppercase tracking-wider text-xs hidden md:table-cell">Last Seen / Captured</th>
+                  <th className="px-5 py-3.5 font-semibold uppercase tracking-wider text-xs text-center">Score</th>
+                  <th className="px-5 py-3.5 font-semibold uppercase tracking-wider text-xs">Status</th>
                 </tr>
-              ) : (
-                jobs.map((job, idx) => (
-                  <motion.tr
-                    key={job.id || idx}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: Math.min(idx * 0.03, 0.5) }}
-                    className="hover:bg-muted/30 transition-colors group"
-                  >
-                    {/* Clickable Job Title */}
-                    <td className="px-5 py-4 font-medium max-w-[220px]">
-                      {job.url ? (
-                        <a
-                          href={job.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-start gap-1.5 text-foreground group-hover:text-primary transition-colors hover:underline underline-offset-2"
-                        >
-                          <span className="line-clamp-2">{job.title}</span>
-                          <ExternalLink className="h-3 w-3 shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </a>
-                      ) : (
-                        <span className="text-foreground line-clamp-2">{job.title}</span>
-                      )}
+              </thead>
+              <tbody className="divide-y divide-border/30">
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i}>
+                      {Array.from({ length: 7 }).map((_, j) => (
+                        <td key={j} className="px-5 py-4">
+                          <div className="h-4 rounded bg-muted animate-pulse" style={{ width: `${60 + Math.random() * 40}%` }} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                ) : jobs.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-5 py-16 text-center text-muted-foreground">
+                      <div className="flex flex-col items-center gap-3">
+                        <AlertTriangle className="h-8 w-8 opacity-30" />
+                        <p>No jobs found. Initialize the bot to start discovering opportunities.</p>
+                      </div>
                     </td>
-                    <td className="px-5 py-4 text-muted-foreground">{job.company}</td>
-                    <td className="px-5 py-4 text-muted-foreground text-xs hidden md:table-cell max-w-[160px] truncate">{job.location}</td>
-                    <td className="px-5 py-4 text-muted-foreground text-xs hidden md:table-cell whitespace-nowrap">{formatDate(job.capturedAt)}</td>
-                    <td className="px-5 py-4 text-center">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${getScoreColor(job.relevanceScore, job.matchDecision)}`}>
-                        {job.relevanceScore}%
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className="inline-flex items-center text-xs font-medium">
-                        {job.status === "Applied" ? (
-                          <span className="text-emerald-500 flex items-center gap-1.5">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Applied
-                          </span>
+                  </tr>
+                ) : (
+                  jobs.map((job, idx) => (
+                    <motion.tr
+                      key={job.id || idx}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: Math.min(idx * 0.03, 0.5) }}
+                      className="hover:bg-muted/30 transition-colors group"
+                    >
+                      {/* Clickable Job Title */}
+                      <td className="px-5 py-4 font-medium max-w-[220px]">
+                        {job.url ? (
+                          <a
+                            href={job.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-start gap-1.5 text-foreground group-hover:text-primary transition-colors hover:underline underline-offset-2"
+                          >
+                            <span className="line-clamp-2">{job.title}</span>
+                            <ExternalLink className="h-3 w-3 shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </a>
                         ) : (
-                          <span className="text-muted-foreground">{job.status || 'Not Applied'}</span>
+                          <span className="text-foreground line-clamp-2">{job.title}</span>
                         )}
-                      </span>
-                    </td>
-                  </motion.tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                      </td>
+                      <td className="px-5 py-4 text-muted-foreground">{job.company}</td>
+                      <td className="px-5 py-4 text-muted-foreground text-xs hidden md:table-cell max-w-[160px] truncate">{job.location}</td>
+                      <td className="px-5 py-4 text-muted-foreground text-xs hidden md:table-cell whitespace-nowrap">{job.posted || '—'}</td>
+                      <td className="px-5 py-4 text-muted-foreground text-xs hidden md:table-cell whitespace-nowrap">
+                        <div className="font-medium">{formatDate(job.lastSeenAt || job.capturedAt)}</div>
+                        {job.lastSeenAt && job.capturedAt && job.lastSeenAt !== job.capturedAt && (
+                          <div className="text-[10px] opacity-40">First seen: {formatDate(job.capturedAt)}</div>
+                        )}
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${getScoreColor(job.relevanceScore, job.matchDecision)}`}>
+                          {job.relevanceScore}%
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="inline-flex items-center text-xs font-medium">
+                          {job.status === "Applied" ? (
+                            <span className="text-emerald-500 flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Applied
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">{job.status || 'Not Applied'}</span>
+                          )}
+                        </span>
+                      </td>
+                    </motion.tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Run Logs (Right 1 column) */}
+        <div className="glass-panel rounded-2xl overflow-hidden flex flex-col">
+          <div className="px-6 py-4 border-b border-border/40 bg-muted/10 flex items-center justify-between">
+            <h3 className="font-semibold text-base flex items-center gap-2">
+              <Activity className="h-4 w-4 text-primary animate-pulse" /> Bot Run History
+            </h3>
+            <span className="text-xs text-muted-foreground">{runLogs.length} runs saved</span>
+          </div>
+          <div className="p-4 flex-1 overflow-y-auto max-h-[500px] space-y-3">
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-16 rounded bg-muted animate-pulse" />
+              ))
+            ) : runLogs.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8 text-sm">
+                No runs recorded yet.
+              </div>
+            ) : (
+              runLogs.map((log) => {
+                const isExpanded = expandedLogId === log.id;
+                const totalActions = log.actions?.length || 0;
+                const totalWarnings = log.warnings?.length || 0;
+
+                return (
+                  <div
+                    key={log.id}
+                    className="border border-border/30 rounded-xl overflow-hidden bg-muted/5 hover:border-border/60 transition-colors"
+                  >
+                    {/* Header */}
+                    <button
+                      onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
+                      className="w-full text-left p-4 flex items-center justify-between gap-3 text-sm focus:outline-none"
+                    >
+                      <div className="space-y-1">
+                        <div className="font-semibold">{formatDate(log.startedAt)}</div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-2">
+                          <span>🔍 Found: {log.jobCount}</span>
+                          <span>•</span>
+                          <span>📋 Tracked: {log.trackerCount}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {totalWarnings > 0 && (
+                          <span className="bg-amber-500/10 text-amber-500 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" /> {totalWarnings}
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-lg">
+                          {isExpanded ? 'Hide' : 'Show Details'}
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* Actions and Warnings */}
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={{ height: 'auto' }}
+                          exit={{ height: 0 }}
+                          className="overflow-hidden border-t border-border/30 bg-muted/15"
+                        >
+                          <div className="p-4 space-y-4 text-xs font-mono">
+                            {/* Warnings */}
+                            {totalWarnings > 0 && (
+                              <div className="space-y-1.5">
+                                <div className="font-semibold text-amber-500 flex items-center gap-1">
+                                  <AlertTriangle className="h-3.5 w-3.5" /> Warnings:
+                                </div>
+                                <ul className="list-disc pl-4 space-y-1 text-amber-500/80">
+                                  {log.warnings.map((warn, wIdx) => (
+                                    <li key={wIdx}>{warn}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Actions */}
+                            <div className="space-y-1.5">
+                              <div className="font-semibold text-foreground flex items-center gap-1">
+                                <Activity className="h-3.5 w-3.5 text-primary" /> Steps Performed:
+                              </div>
+                              {totalActions === 0 ? (
+                                <div className="text-muted-foreground italic pl-1">No steps recorded.</div>
+                              ) : (
+                                <ul className="space-y-1.5 border-l-2 border-primary/20 pl-3">
+                                  {log.actions.map((act, aIdx) => (
+                                    <li key={aIdx} className="text-muted-foreground leading-relaxed relative">
+                                      <span className="absolute -left-[17px] top-[5px] h-2.5 w-2.5 rounded-full border border-primary/40 bg-background" />
+                                      {act}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       </motion.div>
     </motion.div>
