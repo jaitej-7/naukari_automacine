@@ -1,12 +1,15 @@
+import 'dotenv/config';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { tailorResume } from './resume-tailor.js';
-import Database from 'better-sqlite3';
-import prismaClientPkg from '@prisma/client';
-const { PrismaClient } = prismaClientPkg;
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { prisma } from './utils/db.js';
+import { downloadResumeFromSupabase } from './utils/storage.js';
+import { decrypt } from './utils/crypto.js';
+import { optimizeResumeForJob } from './resume-optimizer.js';
+import { answerScreeningQuestion } from './services/gemini.js';
+import { sendDiscordQuestion } from './services/discord.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,9 +19,7 @@ import stealthPlugin from 'puppeteer-extra-plugin-stealth';
 chromium.use(stealthPlugin());
 const rootDir = path.resolve(__dirname, '..');
 
-const dbPath = path.join(rootDir, 'database.sqlite');
-const adapter = new PrismaBetterSqlite3({ url: `file:${dbPath}` });
-const prisma = new PrismaClient({ adapter });
+// Database initialized via src/utils/db.js
 const profileDir = path.join(rootDir, 'browser-profile');
 const reportsDir = path.join(rootDir, 'reports');
 const jobResumeDir = path.join(rootDir, 'job-resumes');
@@ -45,19 +46,43 @@ async function loadLocalEnv() {
   }
 }
 
+function calculateExperience(startDateStr) {
+  if (!startDateStr) return null;
+  const start = new Date(startDateStr);
+  const now = new Date();
+  if (isNaN(start.getTime())) return null;
+
+  let years = now.getFullYear() - start.getFullYear();
+  let months = now.getMonth() - start.getMonth();
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  return { years, months, text: `${years} Years ${months} Months` };
+}
+
 async function readConfig() {
   const c = await prisma.configuration.findUnique({ where: { id: 1 } });
   if (!c) {
     console.error("Configuration not found in database.");
     process.exit(1);
   }
+  const exp = calculateExperience(c.careerStartDate);
   return {
-    resume: { path: c.resumePath, uploadEveryRun: c.uploadEveryRun },
+    resume: { 
+      path: c.resumePath, 
+      uploadEveryRun: c.uploadEveryRun,
+      resumeStoragePath: c.resumeStoragePath,
+      resumeText: c.resumeText
+    },
     profile: {
       refreshProfile: c.refreshProfile,
       headline: c.headline,
       profileSummary: c.profileSummary,
-      keySkills: JSON.parse(c.keySkills || '[]')
+      keySkills: JSON.parse(c.keySkills || '[]'),
+      careerStartDate: c.careerStartDate,
+      calculatedExperience: exp,
+      customFields: JSON.parse(c.customFields || '{}')
     },
     jobs: {
       searches: JSON.parse(c.searches || '[]'),
@@ -76,6 +101,15 @@ async function readConfig() {
       headless: c.headless,
       slowMoMs: c.slowMoMs,
       manualLoginTimeoutMs: c.manualLoginTimeoutMs
+    },
+    discord: {
+      webhookUrl: c.discordWebhookUrl,
+      botToken: c.discordBotToken,
+      qaChannelId: c.discordQaChannelId
+    },
+    credentials: {
+      email: c.naukriEmail,
+      encryptedPassword: c.naukriPassword
     }
   };
 }
@@ -122,13 +156,23 @@ function buildSearchUrl(search, page = 1) {
 }
 
 function relevanceScore(job, includeKeywords = [], excludeKeywords = []) {
-  const haystack = `${job.title} ${job.company} ${job.location} ${job.description}`.toLowerCase();
-  const excluded = excludeKeywords.some((keyword) => haystack.includes(String(keyword).toLowerCase()));
+  // Normalize punctuation to spaces so things like "ui/ux" become "ui ux"
+  const haystack = `${job.title} ${job.company} ${job.location} ${job.description}`.toLowerCase().replace(/[^a-z0-9]/g, ' ');
+  
+  const excluded = excludeKeywords.some((keyword) => {
+    const normalizedKeyword = String(keyword).toLowerCase().replace(/[^a-z0-9]/g, ' ').trim();
+    if (!normalizedKeyword) return false;
+    const regex = new RegExp(`\\b${normalizedKeyword}\\b`);
+    return regex.test(haystack);
+  });
 
   if (excluded) return -10;
 
   return includeKeywords.reduce((score, keyword) => {
-    return haystack.includes(String(keyword).toLowerCase()) ? score + 1 : score;
+    const normalizedKeyword = String(keyword).toLowerCase().replace(/[^a-z0-9]/g, ' ').trim();
+    if (!normalizedKeyword) return score;
+    const regex = new RegExp(`\\b${normalizedKeyword}\\b`);
+    return regex.test(haystack) ? score + 1 : score;
   }, 0);
 }
 
@@ -296,13 +340,22 @@ async function waitForManualLogin(page, timeoutMs) {
   return false;
 }
 
-async function attemptCredentialLogin(page, log) {
-  const email = process.env.NAUKRI_EMAIL;
-  const password = process.env.NAUKRI_PASSWORD;
+async function attemptCredentialLogin(page, log, config) {
+  let email = config.credentials?.email || process.env.NAUKRI_EMAIL;
+  let password = process.env.NAUKRI_PASSWORD;
+
+  if (config.credentials?.encryptedPassword && process.env.RSA_PRIVATE_KEY) {
+    try {
+      const privateKey = Buffer.from(process.env.RSA_PRIVATE_KEY, 'base64').toString('utf8');
+      password = decrypt(config.credentials.encryptedPassword, privateKey);
+    } catch (err) {
+      log.warnings.push(`Failed to decrypt database credentials: ${err.message}`);
+    }
+  }
 
   if (!email || !password) return false;
 
-  console.log('Trying Naukri login with local .env email/password.');
+  console.log('Trying Naukri login with configured credentials.');
   await page.goto('https://www.naukri.com/nlogin/login', { waitUntil: 'domcontentloaded' }).catch(() => {});
   await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
 
@@ -595,97 +648,154 @@ function toTrackerCsv(rows) {
   ].join('\n');
 }
 
-async function autoApply(context, jobUrl, log, config) {
+async function autoApply(context, jobRow, log, config) {
+  const jobUrl = jobRow.url;
   const page = await context.newPage();
   try {
+    console.log(`[AutoApply] Navigating to: ${jobUrl}`);
     await page.goto(jobUrl, { waitUntil: 'domcontentloaded' });
-    await sleep(2000); // Let React fully render
+    // Give React time to hydrate the page fully
+    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+    await sleep(3000);
 
-    // Check if already applied
-    const alreadyAppliedBtn = page.locator('button:has-text("Applied")').first();
-    if (await alreadyAppliedBtn.count() > 0) {
+    // --- Check if already applied ---
+    // Naukri renders "Applied" as text inside a button/div with varying class names
+    const alreadyApplied = await page.evaluate(() => {
+      const allButtons = Array.from(document.querySelectorAll('button, a[role="button"], div[class*="apply"]'));
+      return allButtons.some(el => /^applied$/i.test((el.textContent || '').trim()));
+    });
+    if (alreadyApplied) {
+      console.log(`[AutoApply] Already applied to ${jobUrl} — skipping`);
       log.actions.push(`Already applied to ${jobUrl} — skipping`);
       return 'already_applied';
     }
 
-    // Prefer Easy Apply over regular Apply
-    const easyApplyBtn = page.locator('button:has-text("Easy Apply")').first();
-    const regularApplyBtn = page.locator('button:has-text("Apply"), button:has-text("Apply Now")').first();
-
+    // --- Wait for apply button to appear ---
     try {
-      await page.waitForSelector('button:has-text("Easy Apply"), button:has-text("Apply"), button:has-text("Apply Now")', { state: 'attached', timeout: 10000 });
-    } catch {}
+      await page.waitForFunction(() => {
+        const allBtns = Array.from(document.querySelectorAll('button, a[role="button"]'));
+        return allBtns.some(el => /easy apply|apply now|apply$/i.test((el.textContent || '').trim()));
+      }, { timeout: 12000 });
+    } catch {
+      console.log(`[AutoApply] Timed out waiting for apply button on ${jobUrl}`);
+    }
 
-    const hasEasyApply = await easyApplyBtn.count() > 0;
-    const hasRegularApply = await regularApplyBtn.count() > 0;
+    // --- Detect available button types ---
+    const { hasEasyApply, hasRegularApply } = await page.evaluate(() => {
+      const allBtns = Array.from(document.querySelectorAll('button, a[role="button"]'));
+      const hasEasyApply = allBtns.some(el => /easy apply/i.test((el.textContent || '').trim()));
+      const hasRegularApply = allBtns.some(el => /^apply now$|^apply$/i.test((el.textContent || '').trim()));
+      return { hasEasyApply, hasRegularApply };
+    });
+
+    console.log(`[AutoApply] Buttons detected — Easy Apply: ${hasEasyApply}, Regular Apply: ${hasRegularApply}`);
 
     if (!hasEasyApply && !hasRegularApply) {
       log.warnings.push(`No apply button found on ${jobUrl}`);
       return false;
     }
 
-    // If only regular Apply (external), flag for manual action
+    // If only regular Apply (external redirect), flag for manual action
     if (!hasEasyApply && hasRegularApply) {
       log.warnings.push(`MANUAL APPLY NEEDED: ${jobUrl} — only external Apply button found (no Easy Apply)`);
       return 'external';
     }
 
-    // Click Easy Apply
-    await easyApplyBtn.click();
-    await sleep(3000);
+    // --- Click the Easy Apply button using Playwright locator (fires real mouse events for React) ---
+    console.log('[AutoApply] Clicking Easy Apply via Playwright locator...');
+    const easyApplyLocator = page.locator('button, a[role="button"]').filter({ hasText: /easy apply/i }).first();
+    if (await easyApplyLocator.count() === 0) {
+      log.warnings.push(`Could not click Easy Apply on ${jobUrl}`);
+      return false;
+    }
+    await easyApplyLocator.scrollIntoViewIfNeeded();
+    await easyApplyLocator.click({ force: true });
 
-    // Broader success detection
+    console.log(`[AutoApply] Clicked Easy Apply, waiting for response...`);
+    await sleep(4000);
+
+    // --- Broad success detection ---
     const successPatterns = [
       /successfully applied/i,
       /application submitted/i,
       /thank you for applying/i,
-      /you.ve applied/i,
-      /applied successfully/i
+      /you.?ve applied/i,
+      /applied successfully/i,
+      /your application has been/i,
+      /application received/i
     ];
     for (const pattern of successPatterns) {
       try {
-        await page.getByText(pattern).waitFor({ state: 'visible', timeout: 3000 });
-        log.actions.push(`Successfully auto-applied to ${jobUrl}`);
-        return true;
+        const match = await page.getByText(pattern).first();
+        if (await match.isVisible({ timeout: 3000 }).catch(() => false)) {
+          console.log(`[AutoApply] Success confirmed via text pattern: ${pattern}`);
+          log.actions.push(`Successfully auto-applied to ${jobUrl}`);
+          return true;
+        }
       } catch {}
     }
 
-    // Check if button changed to "Applied"
-    if (await page.locator('button:has-text("Applied")').count() > 0) {
+    // --- Check if the button text changed to "Applied" after clicking ---
+    const nowApplied = await page.evaluate(() => {
+      const allBtns = Array.from(document.querySelectorAll('button, a[role="button"], div[class*="apply"]'));
+      return allBtns.some(el => /^applied$/i.test((el.textContent || '').trim()));
+    });
+    if (nowApplied) {
+      console.log(`[AutoApply] Button changed to "Applied" — success confirmed.`);
       log.actions.push(`Successfully auto-applied to ${jobUrl}`);
       return true;
     }
 
-    // Try questionnaire
-    const qaSuccess = await handleQuestionnaire(page, config, log, jobUrl);
-    if (qaSuccess) return true;
+    // --- Check for a multi-step questionnaire ---
+    const qaResult = await handleQuestionnaire(page, config, log, jobRow);
+    if (qaResult === true) return true;
+    if (qaResult === 'timeout') return 'timeout';
 
-    log.warnings.push(`Applied to ${jobUrl} but could not confirm success`);
+    log.warnings.push(`Applied to ${jobUrl} but could not confirm success — marking for manual review`);
     return false;
   } catch (error) {
     log.warnings.push(`Error during autoApply for ${jobUrl}: ${error.message}`);
+    console.error(`[AutoApply] Error:`, error.message);
     return false;
   } finally {
     await page.close();
   }
 }
 
-async function handleQuestionnaire(page, config, log, jobUrl) {
-  if (!config.applications?.qaMemory) return false;
+async function handleQuestionnaire(page, config, log, jobRow) {
+  const jobUrl = jobRow.url;
   await sleep(3000); // Wait for modal to render
 
-  // Find visible inputs (excluding buttons/checkboxes for simplicity)
-  const inputs = await page.locator('input[type="text"]:visible, input[type="number"]:visible, textarea:visible, select:visible').all();
-  if (inputs.length === 0) {
+  // --- Collect all answerable inputs in the modal/page ---
+  // Includes text, number, textarea, select, radio groups, and checkboxes
+  const textInputs = await page.locator(
+    'input[type="text"]:visible, input[type="number"]:visible, textarea:visible, select:visible'
+  ).all();
+
+  // Find radio button groups (each group = one question)
+  const radioGroups = await page.evaluate(() => {
+    const inputs = Array.from(document.querySelectorAll('input[type="radio"]:not([disabled])'));
+    const groups = {};
+    for (const input of inputs) {
+      const name = input.name || input.getAttribute('data-name') || 'unnamed';
+      if (!groups[name]) groups[name] = [];
+      const label = input.closest('label') || document.querySelector(`label[for="${input.id}"]`);
+      const optionText = label ? label.innerText.trim() : input.value;
+      groups[name].push({ name, value: input.value, label: optionText });
+    }
+    return Object.values(groups);
+  });
+
+  const hasAnything = textInputs.length > 0 || radioGroups.length > 0;
+  if (!hasAnything) {
     log.warnings.push(`No success message and no questionnaire found for ${jobUrl}`);
     return false;
   }
 
   let allAnswered = true;
-  const unanswered = [];
 
-  for (const input of inputs) {
-    // Ignore the main site search bars
+  // --- Handle text / select inputs ---
+  for (const input of textInputs) {
     const placeholder = await input.getAttribute('placeholder').catch(() => '');
     if (placeholder && placeholder.toLowerCase().includes('search')) continue;
     
@@ -697,42 +807,118 @@ async function handleQuestionnaire(page, config, log, jobUrl) {
       return parent ? parent.innerText.trim().replace(/\n/g, ' ') : '';
     });
 
+    if (!questionText.trim()) continue;
+
+    console.log(`[Q&A Engine] Text/Select question: "${questionText}"`);
+
     let answered = false;
+    let answerText = '';
+
+    // Step 1: Cache
     for (const [key, val] of Object.entries(config.applications.qaMemory)) {
       if (questionText.toLowerCase().includes(key.toLowerCase())) {
-        const tagName = await input.evaluate(el => el.tagName.toLowerCase());
-        if (tagName === 'select') {
-          // Attempt to select option by label containing the value
-          const options = await input.locator('option').allInnerTexts();
-          const match = options.find(o => o.toLowerCase().includes(String(val).toLowerCase()));
-          if (match) {
-            await input.selectOption({ label: match });
-            answered = true;
-          }
-        } else {
-          await input.fill(String(val));
-          answered = true;
-        }
+        answerText = String(val);
+        answered = true;
+        console.log(`[Q&A Engine] Cache hit: "${answerText}" for key "${key}"`);
         break;
       }
     }
 
+    // Step 2: Gemini
+    if (!answered && process.env.GEMINI_API_KEY) {
+      const tagName = await input.evaluate(el => el.tagName.toLowerCase());
+      let options = [];
+      if (tagName === 'select') {
+        options = await input.locator('option').allInnerTexts();
+        options = options.map(o => o.trim()).filter(o => o && !o.toLowerCase().includes('select'));
+      }
+      const aiResponse = await answerScreeningQuestion(questionText, options, config.profile);
+      if (aiResponse.canAnswer && aiResponse.answer !== undefined) {
+        answerText = String(aiResponse.answer);
+        answered = true;
+        console.log(`[Q&A Engine] Gemini: "${answerText}" (${aiResponse.reasoning})`);
+      }
+    }
+
+    // Step 3: Discord fallback
     if (!answered) {
+      const discordResult = await askViaDiscord(page, input, questionText, [], config, log, jobRow);
+      if (discordResult === 'timeout') return 'timeout';
+      if (discordResult !== null) { answerText = discordResult; answered = true; }
+    }
+
+    if (answered) {
+      const tagName = await input.evaluate(el => el.tagName.toLowerCase());
+      if (tagName === 'select') {
+        const options = await input.locator('option').allInnerTexts();
+        const match = options.find(o => o.toLowerCase().includes(answerText.toLowerCase()));
+        if (match) await input.selectOption({ label: match });
+        else await input.selectOption({ value: answerText });
+      } else {
+        await input.fill(answerText);
+      }
+      await sleep(800);
+    } else {
       allAnswered = false;
-      unanswered.push(questionText.substring(0, 150));
+      break;
+    }
+  }
+
+  // --- Handle radio button groups ---
+  for (const group of radioGroups) {
+    if (!allAnswered) break;
+    const questionText = group[0]?.label || group[0]?.name || 'Unknown question';
+    const options = group.map(o => o.label);
+    console.log(`[Q&A Engine] Radio question: "${questionText}" Options: [${options.join(', ')}]`);
+
+    let answered = false;
+    let answerText = '';
+
+    // Step 1: Cache
+    for (const [key, val] of Object.entries(config.applications.qaMemory)) {
+      if (questionText.toLowerCase().includes(key.toLowerCase())) {
+        answerText = String(val); answered = true;
+        console.log(`[Q&A Engine] Cache hit for radio: "${answerText}"`);
+        break;
+      }
+    }
+
+    // Step 2: Gemini
+    if (!answered && process.env.GEMINI_API_KEY) {
+      const aiResponse = await answerScreeningQuestion(questionText, options, config.profile);
+      if (aiResponse.canAnswer && aiResponse.answer !== undefined) {
+        answerText = String(aiResponse.answer);
+        answered = true;
+        console.log(`[Q&A Engine] Gemini radio: "${answerText}"`);
+      }
+    }
+
+    // Step 3: Discord fallback
+    if (!answered) {
+      const discordResult = await askViaDiscord(page, null, questionText, options, config, log, jobRow);
+      if (discordResult === 'timeout') return 'timeout';
+      if (discordResult !== null) { answerText = discordResult; answered = true; }
+    }
+
+    if (answered) {
+      // Click the matching radio button
+      const matchingOption = group.find(o =>
+        o.label.toLowerCase().includes(answerText.toLowerCase()) ||
+        o.value.toLowerCase().includes(answerText.toLowerCase())
+      ) || group[0]; // fallback to first option
+      
+      await page.evaluate((opt) => {
+        const radio = document.querySelector(`input[type="radio"][value="${opt.value}"][name="${opt.name}"]`);
+        if (radio) radio.click();
+      }, matchingOption);
+      await sleep(800);
+    } else {
+      allAnswered = false;
     }
   }
 
   if (!allAnswered) {
-    const unansweredFile = path.join(process.cwd(), 'reports', 'unanswered-questions.json');
-    let existing = [];
-    try {
-      existing = JSON.parse(await fs.readFile(unansweredFile, 'utf8'));
-    } catch {}
-    existing.push({ url: jobUrl, time: new Date().toISOString(), missing: unanswered });
-    await fs.writeFile(unansweredFile, JSON.stringify(existing, null, 2));
-
-    log.warnings.push(`Aborted application for ${jobUrl}. Missing answers for: ${unanswered[0]}...`);
+    log.warnings.push(`Aborted application for ${jobUrl}. Questionnaire could not be completed.`);
     return false;
   }
 
@@ -740,13 +926,81 @@ async function handleQuestionnaire(page, config, log, jobUrl) {
   const submitBtn = page.locator('button').filter({ hasText: /^Submit$|^Save$|^Apply$|^Save & Apply$/i }).first();
   if (await submitBtn.count() > 0) {
     await submitBtn.click();
-    await sleep(3000);
+    await sleep(4000);
     log.actions.push(`Successfully auto-applied (via Q&A engine) to ${jobUrl}`);
     return true;
   }
 
   log.warnings.push(`Filled Q&A for ${jobUrl} but couldn't find Submit button.`);
   return false;
+}
+
+// Shared Discord fallback helper used by handleQuestionnaire
+async function askViaDiscord(page, input, questionText, options, config, log, jobRow) {
+  if (!config.discord?.botToken || !config.discord?.qaChannelId) {
+    log.warnings.push(`Discord not configured. Cannot fallback for Q: "${questionText.substring(0, 50)}"`);
+    return null;
+  }
+
+  if (input) {
+    const tagName = await input.evaluate(el => el.tagName.toLowerCase());
+    if (tagName === 'select' && options.length === 0) {
+      options = await input.locator('option').allInnerTexts();
+      options = options.map(o => o.trim()).filter(o => o && !o.toLowerCase().includes('select'));
+    }
+  }
+
+  const qaRow = await prisma.qAInteraction.create({
+    data: {
+      jobId: jobRow.id,
+      jobTitle: jobRow.title,
+      company: jobRow.company,
+      question: questionText,
+      options: JSON.stringify(options),
+      status: 'pending'
+    }
+  });
+
+  const messageId = await sendDiscordQuestion(
+    config.discord.botToken,
+    config.discord.qaChannelId,
+    qaRow.id,
+    { title: jobRow.title, company: jobRow.company, url: jobRow.url },
+    questionText,
+    options
+  );
+
+  if (!messageId) {
+    log.warnings.push(`Failed to send question to Discord. Aborting.`);
+    return null;
+  }
+
+  await prisma.job.update({ where: { id: jobRow.id }, data: { status: 'Pending Q&A' } });
+  console.log(`[Q&A Engine] Paused. Waiting up to 10 minutes for Discord response...`);
+
+  const pollStart = Date.now();
+  while (Date.now() - pollStart < 10 * 60 * 1000) {
+    await sleep(3000);
+    const interaction = await prisma.qAInteraction.findUnique({ where: { id: qaRow.id } });
+    if (interaction?.status === 'answered') {
+      const answer = interaction.answer;
+      // Cache the answer
+      try {
+        const currentConfig = await prisma.configuration.findUnique({ where: { id: 1 } });
+        const mem = JSON.parse(currentConfig?.qaMemory || '{}');
+        const key = questionText.toLowerCase().replace(/[^a-z0-9 ]/g, '').substring(0, 50).trim();
+        mem[key] = answer;
+        await prisma.configuration.update({ where: { id: 1 }, data: { qaMemory: JSON.stringify(mem) } });
+      } catch {}
+      console.log(`[Q&A Engine] Discord answer received: "${answer}"`);
+      return answer;
+    }
+    if (interaction?.status === 'timeout') break;
+  }
+
+  await prisma.qAInteraction.update({ where: { id: qaRow.id }, data: { status: 'timeout' } });
+  log.warnings.push(`Discord Q&A timeout for: "${questionText.substring(0, 50)}"`);
+  return 'timeout';
 }
 
 async function notifyWebhook(payload) {
@@ -885,11 +1139,37 @@ async function main() {
     headless = false;
   }
 
-  const context = await chromium.launchPersistentContext(profileDir, {
-    headless: headless,
+  let defaultUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.7778.96 Safari/537.36';
+  if (headless) {
+    try {
+      const tempBrowser = await chromium.launch({ headless: true });
+      const tempPage = await tempBrowser.newPage();
+      const ua = await tempPage.evaluate(() => navigator.userAgent);
+      await tempBrowser.close();
+      defaultUserAgent = ua.replace('HeadlessChrome/', 'Chrome/');
+    } catch (e) {
+      console.error('Failed to get dynamic user-agent:', e.message);
+    }
+  }
+
+  const launchOptions = {
+    headless: false, // Force headful engine to bypass Akamai
     slowMo: config.browser?.slowMoMs ?? 0,
-    viewport: { width: 1366, height: 900 }
-  });
+    viewport: { width: 1366, height: 900 },
+    args: [
+      '--disable-blink-features=AutomationControlled',
+      '--no-sandbox',
+      '--disable-setuid-sandbox'
+    ]
+  };
+
+  // Override user-agent in headless mode to strip "HeadlessChrome" and mimic standard desktop browser
+  if (headless) {
+    launchOptions.args.push('--headless=new');
+    launchOptions.userAgent = defaultUserAgent;
+  }
+
+  const context = await chromium.launchPersistentContext(profileDir, launchOptions);
 
   const page = context.pages()[0] || await context.newPage();
 
@@ -897,7 +1177,7 @@ async function main() {
     console.log('Checking saved Naukri session.');
     let loggedIn = await isLoggedIn(page);
     if (!loggedIn) {
-      loggedIn = await attemptCredentialLogin(page, log);
+      loggedIn = await attemptCredentialLogin(page, log, config);
     }
 
     if (process.argv.includes('--login-test')) {
@@ -914,8 +1194,19 @@ async function main() {
     }
 
     if (config.resume?.uploadEveryRun) {
-      console.log('Uploading configured resume.');
-      await uploadResume(page, config.resume.path, log);
+      let localResumePath = config.resume.path;
+      if (config.resume.resumeStoragePath) {
+        console.log('Downloading master resume from Supabase Storage...');
+        const localDownloadDir = path.join(rootDir, 'resume');
+        const filename = path.basename(config.resume.resumeStoragePath) || 'master_resume.pdf';
+        const downloadedPath = path.join(localDownloadDir, filename);
+        const ok = await downloadResumeFromSupabase(config.resume.resumeStoragePath, downloadedPath);
+        if (ok) {
+          localResumePath = downloadedPath;
+        }
+      }
+      console.log(`Uploading configured resume from: ${localResumePath}`);
+      await uploadResume(page, localResumePath, log);
     }
 
     console.log('Refreshing profile activity.');
@@ -943,14 +1234,14 @@ async function main() {
     let appliedCount = 0;
     if (config.applications?.directApply) {
       console.log('Starting Auto-Apply process for all new jobs...');
-      const minScore = config.applications?.minRelevanceScore ?? 2;
+      const minScore = config.jobs?.minRelevanceScore ?? 1;
       const eligibleJobs = trackerRows.filter(row =>
         row.status === 'Not Applied' && row.relevanceScore >= minScore
       );
       console.log(`Found ${eligibleJobs.length} eligible jobs to apply (score >= ${minScore})...`);
       for (const row of eligibleJobs) {
         console.log(`Auto-applying to ${row.serialNumber} (${row.company} - score: ${row.relevanceScore})...`);
-        const result = await autoApply(context, row.url, log, config);
+        const result = await autoApply(context, row, log, config);
         if (result === true) {
           row.status = 'Applied';
           row.appliedBy = 'Automation';
@@ -962,9 +1253,14 @@ async function main() {
           row.appliedAt = new Date().toISOString();
         } else if (result === 'external') {
           row.status = 'Manual Apply Needed';
+          // Run AI Resume Optimizer
+          await optimizeResumeForJob(row);
+        } else if (result === 'timeout') {
+          row.status = 'Manual Review (Q&A Timeout)';
         }
+
         const success = result === true;
-        if (success || result === 'already_applied' || result === 'external') {
+        if (success || result === 'already_applied' || result === 'external' || result === 'timeout') {
           try {
             await prisma.job.update({
               where: { id: row.id },
@@ -979,7 +1275,6 @@ async function main() {
             log.warnings.push(`Could not update job ${row.serialNumber} (${updateErr.code || updateErr.message})`);
           }
         }
-
       }
     }
 

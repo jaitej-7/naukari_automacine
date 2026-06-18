@@ -1,20 +1,11 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import path from 'path';
+import { prisma } from '@/utils/db';
+import { encrypt } from '@/utils/crypto';
 
 export const dynamic = 'force-dynamic';
 
-function getPrisma() {
-  const dbPath = path.join(process.cwd(), '../database.sqlite');
-  const adapter = new PrismaBetterSqlite3({ url: `file:${dbPath}` });
-  return new PrismaClient({ adapter });
-}
-
 export async function GET() {
-  let prisma;
   try {
-    prisma = getPrisma();
     const c = await prisma.configuration.findUnique({ where: { id: 1 } });
     if (!c) {
       return NextResponse.json({});
@@ -49,26 +40,47 @@ export async function GET() {
         headless: c.headless,
         slowMoMs: c.slowMoMs,
         manualLoginTimeoutMs: c.manualLoginTimeoutMs
-      }
+      },
+      naukriEmail: c.naukriEmail,
+      geminiApiKey: c.geminiApiKey,
+      publicKey: c.publicKey,
+      careerStartDate: c.careerStartDate,
+      customFields: JSON.parse(c.customFields || '{}'),
+      discordWebhookUrl: c.discordWebhookUrl,
+      discordBotToken: c.discordBotToken,
+      discordQaChannelId: c.discordQaChannelId,
+      schedulerEnabled: c.schedulerEnabled,
+      schedulerIntervalMin: c.schedulerIntervalMin
     };
 
     return NextResponse.json(config);
   } catch (error) {
     console.error('Error reading config:', error);
     return NextResponse.json({ error: 'Failed to read config' }, { status: 500 });
-  } finally {
-    if (prisma) await prisma.$disconnect();
   }
 }
 
 export async function POST(request: Request) {
-  let prisma;
   try {
     const body = await request.json();
-    prisma = getPrisma();
 
     // Fetch existing configuration to merge
     const existing = await prisma.configuration.findUnique({ where: { id: 1 } });
+
+    let encryptedPassword = existing?.naukriPassword ?? null;
+    if (body.naukriPassword) {
+      const pubKey = existing?.publicKey || body.publicKey;
+      if (pubKey) {
+        try {
+          encryptedPassword = encrypt(body.naukriPassword, pubKey);
+        } catch (err: any) {
+          console.error('[Config API] Password encryption failed:', err.message);
+          encryptedPassword = body.naukriPassword; // Fallback
+        }
+      } else {
+        encryptedPassword = body.naukriPassword;
+      }
+    }
 
     const dataToSave = {
       resumePath: body.resume?.path ?? existing?.resumePath ?? '',
@@ -101,7 +113,19 @@ export async function POST(request: Request) {
         : (existing?.statuses || '["Not Applied", "Applied", "Rejected", "Interviewing"]'),
       headless: body.browser?.headless ?? (typeof body.headless === 'boolean' ? body.headless : (existing?.headless ?? true)),
       slowMoMs: body.browser?.slowMoMs ?? existing?.slowMoMs ?? 120,
-      manualLoginTimeoutMs: body.browser?.manualLoginTimeoutMs ?? existing?.manualLoginTimeoutMs ?? 300000
+      manualLoginTimeoutMs: body.browser?.manualLoginTimeoutMs ?? existing?.manualLoginTimeoutMs ?? 300000,
+      
+      // New fields from settings panel:
+      naukriEmail: body.naukriEmail ?? existing?.naukriEmail ?? null,
+      naukriPassword: encryptedPassword,
+      geminiApiKey: body.geminiApiKey ?? existing?.geminiApiKey ?? null,
+      careerStartDate: body.careerStartDate ?? existing?.careerStartDate ?? null,
+      customFields: body.customFields ? JSON.stringify(body.customFields) : (existing?.customFields || '{}'),
+      discordWebhookUrl: body.discordWebhookUrl ?? existing?.discordWebhookUrl ?? null,
+      discordBotToken: body.discordBotToken ?? existing?.discordBotToken ?? null,
+      discordQaChannelId: body.discordQaChannelId ?? existing?.discordQaChannelId ?? null,
+      schedulerEnabled: typeof body.schedulerEnabled === 'boolean' ? body.schedulerEnabled : (existing?.schedulerEnabled ?? false),
+      schedulerIntervalMin: body.schedulerIntervalMin ?? existing?.schedulerIntervalMin ?? 60,
     };
 
     await prisma.configuration.upsert({
@@ -114,7 +138,5 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error updating config:', error);
     return NextResponse.json({ error: 'Failed to update config' }, { status: 500 });
-  } finally {
-    if (prisma) await prisma.$disconnect();
   }
 }

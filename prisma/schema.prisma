@@ -3,33 +3,34 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model Job {
-  id             String   @id @default(cuid())
-  serialNumber   String   @unique
-  status         String   @default("Not Applied")
-  appliedBy      String?
-  appliedAt      String?
-  resumeStatus   String   @default("Needs Resume")
-  resumeFile     String?
-  matchDecision  String   @default("Review")
-  relevanceScore Int      @default(0)
-  title          String
-  company        String
-  location       String?
-  experience     String?
-  salary         String?
-  url            String?
-  resumeFolder   String?
-  searchKeywords String?
-  capturedAt     String
-  lastSeenAt     String
-  notes          String?
-  jobKey         String   @unique
-  description    String?
-  posted         String?
+  id              String   @id @default(cuid())
+  serialNumber    String   @unique
+  status          String   @default("Not Applied")
+  appliedBy       String?
+  appliedAt       String?
+  resumeStatus    String   @default("Needs Resume")
+  resumeFile      String?
+  matchDecision   String   @default("Review")
+  relevanceScore  Int      @default(0)
+  title           String
+  company         String
+  location        String?
+  experience      String?
+  salary          String?
+  url             String?
+  resumeFolder    String?
+  searchKeywords  String?
+  capturedAt      String
+  lastSeenAt      String
+  notes           String?
+  jobKey          String   @unique
+  description     String?
+  posted          String?
+  resumeChecklist String?  // AI Resume Checklist (Markdown format)
 }
 
 model RunLog {
@@ -38,29 +39,77 @@ model RunLog {
   finishedAt   String?
   jobCount     Int      @default(0)
   trackerCount Int      @default(0)
-  actions      String   // Stored as JSON string
-  warnings     String   // Stored as JSON string
+  actions      String   // JSON string
+  warnings     String   // JSON string
 }
 
 model Configuration {
   id                   Int     @id @default(1)
-  resumePath           String
+  resumePath           String  @default("")
   uploadEveryRun       Boolean @default(true)
   refreshProfile       Boolean @default(true)
   headline             String?
   profileSummary       String?
-  keySkills            String  // Stored as JSON string
+  keySkills            String  @default("[]") // JSON string
   maxResultsPerSearch  Int     @default(25)
   minRelevanceScore    Int     @default(2)
-  searches             String  // JSON string
-  includeKeywords      String  // JSON string
-  excludeKeywords      String  // JSON string
+  searches             String  @default("[]") // JSON string
+  includeKeywords      String  @default("[]") // JSON string
+  excludeKeywords      String  @default("[]") // JSON string
   directApply          Boolean @default(true)
   createResumeFolder   Boolean @default(true)
   defaultStatus        String  @default("Not Applied")
-  qaMemory             String  // JSON string
-  statuses             String  // JSON string
+  qaMemory             String  @default("{}") // JSON string
+  statuses             String  @default("[]") // JSON string
   headless             Boolean @default(true)
   slowMoMs             Int     @default(120)
   manualLoginTimeoutMs Int     @default(300000)
+  
+  // Credentials & Cryptography
+  naukriEmail          String?
+  naukriPassword       String? // RSA encrypted password (stored as base64 ciphertext)
+  publicKey            String? // RSA Public Key (PEM format)
+  
+  // Custom Profile Fields & Experience
+  careerStartDate      String? // YYYY-MM-DD
+  customFields         String  @default("{}") // JSON string for custom profile fields
+  
+  // AI Services
+  geminiApiKey         String?
+  
+  // Resume storage
+  resumeStoragePath    String? // Path in Supabase storage bucket
+  resumeText           String? // Extracted plain text of the resume
+  
+  // Discord Integrations
+  discordWebhookUrl    String?
+  discordBotToken      String?
+  discordQaChannelId   String?
+
+  // Background Run Scheduler Settings
+  schedulerEnabled     Boolean @default(false)
+  schedulerIntervalMin Int     @default(60) // Interval in minutes (e.g. 30, 60, 120)
+}
+
+model BotRun {
+  id          String    @id @default(cuid())
+  status      String    @default("queued") // queued, in-progress, completed, failed
+  triggeredAt DateTime  @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  logs        String    @default("[]") // JSON array of logs
+  headless    Boolean   @default(true)
+}
+
+model QAInteraction {
+  id          String    @id @default(cuid())
+  jobId       String
+  jobTitle    String
+  company     String
+  question    String
+  options     String?   // JSON array of option strings
+  status      String    @default("pending") // pending, answered, timeout
+  answer      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }

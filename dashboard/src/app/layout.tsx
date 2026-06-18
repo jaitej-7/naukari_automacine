@@ -1,18 +1,25 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Outfit, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
-import Link from "next/link";
+import { Header } from "@/components/header";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const bodyFont = Plus_Jakarta_Sans({
+  variable: "--font-body",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const headingFont = Outfit({
+  variable: "--font-heading",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
+
+const monoFont = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -29,30 +36,11 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${headingFont.variable} ${bodyFont.variable} ${monoFont.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300">
+      <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300 font-sans">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container mx-auto flex h-14 max-w-screen-xl items-center justify-between px-4">
-              <div className="flex items-center space-x-6 text-sm font-medium">
-                <Link href="/" className="flex items-center space-x-2 text-primary font-semibold text-lg">
-                  <span>Naukri Bot</span>
-                </Link>
-                <nav className="flex items-center space-x-6 text-sm font-medium">
-                  <Link href="/" className="transition-colors hover:text-foreground/80 text-foreground/60">
-                    Dashboard
-                  </Link>
-                  <Link href="/settings" className="transition-colors hover:text-foreground/80 text-foreground/60">
-                    Settings
-                  </Link>
-                </nav>
-              </div>
-              <div className="flex items-center justify-end space-x-4">
-                <ThemeToggle />
-              </div>
-            </div>
-          </header>
+          <Header />
           <main className="flex-1 container mx-auto max-w-screen-xl px-4 py-8">
             {children}
           </main>
@@ -61,3 +49,4 @@ export default function RootLayout({
     </html>
   );
 }
+

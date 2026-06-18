@@ -1,21 +1,10 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import path from 'path';
+import { prisma } from '@/utils/db';
 
 export const dynamic = 'force-dynamic';
 
-function getPrisma() {
-  const dbPath = path.join(process.cwd(), '../database.sqlite');
-  const adapter = new PrismaBetterSqlite3({ url: `file:${dbPath}` });
-  return new PrismaClient({ adapter });
-}
-
 export async function GET() {
-  let prisma;
   try {
-    prisma = getPrisma();
-    
     const trackerData = await prisma.job.findMany({
       orderBy: { serialNumber: 'desc' }
     });
@@ -38,7 +27,18 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching jobs data:', error);
     return NextResponse.json({ error: 'Failed to fetch jobs data' }, { status: 500 });
-  } finally {
-    if (prisma) await prisma.$disconnect();
+  }
+}
+
+export async function DELETE() {
+  try {
+    await prisma.job.deleteMany();
+    await prisma.runLog.deleteMany();
+    await prisma.botRun.deleteMany();
+    await prisma.qAInteraction.deleteMany();
+    return NextResponse.json({ success: true, message: 'All database tables successfully cleared' });
+  } catch (error: any) {
+    console.error('Error clearing database:', error);
+    return NextResponse.json({ error: `Failed to clear database: ${error.message}` }, { status: 500 });
   }
 }

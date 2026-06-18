@@ -20,4 +20,6 @@ if (-not $node) {
 }
 
 Set-Location $root
-& $node ".\src\naukri-automation.js"
+Write-Host "Starting Naukri Automachine Daemon..."
+Write-Host "The daemon picks up queued runs from the dashboard at http://localhost:3000"
+& $node ".\src\daemon.js"
