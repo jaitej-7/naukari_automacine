@@ -30,6 +30,10 @@ export function startDiscordBot(botToken) {
   client.on('interactionCreate', async (interaction) => {
     if (!interaction.isButton()) return;
 
+    if (process.env.DISCORD_OWNER_ID && interaction.user.id !== process.env.DISCORD_OWNER_ID) {
+      return interaction.reply({ content: '❌ Unauthorized.', ephemeral: true });
+    }
+
     const customId = interaction.customId;
     if (!customId.startsWith('qa_btn:')) return;
 
@@ -80,6 +84,10 @@ export function startDiscordBot(botToken) {
   // Handle message replies (for free-text answers)
   client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
+
+    if (process.env.DISCORD_OWNER_ID && message.author.id !== process.env.DISCORD_OWNER_ID) {
+      return;
+    }
 
     // Check if it's a reply to another message
     if (!message.reference || !message.reference.messageId) return;

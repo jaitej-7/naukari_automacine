@@ -88,12 +88,15 @@ model Configuration {
 
   // Background Run Scheduler Settings
   schedulerEnabled     Boolean @default(false)
+  botEnabled           Boolean @default(false)
   schedulerIntervalMin Int     @default(60) // Interval in minutes (e.g. 30, 60, 120)
+  profileRefreshIntervalMin Int @default(10) // Interval for light profile refresh
 }
 
 model BotRun {
   id          String    @id @default(cuid())
   status      String    @default("queued") // queued, in-progress, completed, failed
+  type        String    @default("SWEEP") // SWEEP, REFRESH
   triggeredAt DateTime  @default(now())
   startedAt   DateTime?
   finishedAt  DateTime?

@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import * as XLSX from "xlsx";
 import { 
   CheckCircle2, FileText, Briefcase, Zap, ExternalLink, 
   Clock, AlertTriangle, Activity, Terminal, X, ClipboardCopy, Search,
   SlidersHorizontal, RotateCcw, ChevronRight, Info, HelpCircle, Eye, EyeOff,
-  Sparkles, ListChecks, Play, Cpu
+  Sparkles, ListChecks, Play, Cpu, Download, FileSpreadsheet
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -51,6 +52,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showBrowser, setShowBrowser] = useState(false);
   
+  const initialJobCountRef = useRef<number | null>(null);
+  const wasRunningRef = useRef<boolean>(false);
+  
   // Custom states
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showLogsPanel, setShowLogsPanel] = useState(false);
@@ -60,6 +64,7 @@ export default function Dashboard() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [scoreFilter, setScoreFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("NEWEST");
+  const [botEnabled, setBotEnabled] = useState(false);
 
   // Terminal Console Controls
   const [terminalSearch, setTerminalSearch] = useState("");
@@ -79,8 +84,10 @@ export default function Dashboard() {
     try {
       const res = await fetch("/api/jobs", { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
-      setJobs(Array.isArray(data?.tracker) ? data.tracker : []);
+      const newJobs = Array.isArray(data?.tracker) ? data.tracker : [];
+      setJobs(newJobs);
       setRunLogs(Array.isArray(data?.runLog) ? data.runLog : []);
+      return newJobs;
     } finally {
       setLoading(false);
     }
@@ -98,28 +105,33 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const res = await fetch("/api/config");
+        if (res.ok) {
+          const config = await res.json();
+          setShowBrowser(!config.headless);
+          setBotEnabled(!!config.botEnabled);
+        }
+      } catch (err) {}
+    };
+
     fetchJobs();
     fetchBotStatus();
+    fetchConfig();
   }, [fetchJobs, fetchBotStatus]);
 
-  // Load config browser headless setting on mount
-  useEffect(() => {
-    fetch("/api/config")
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.browser) {
-          setShowBrowser(!data.browser.headless);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  // Poll status more frequently (every 3s) when running, else every 8s
+  // Poll status more frequently (every 3s) when running,  // Polling mechanism
   useEffect(() => {
     const intervalTime = botStatus.running ? 3000 : 8000;
-    const interval = setInterval(fetchBotStatus, intervalTime);
-    return () => clearInterval(interval);
-  }, [fetchBotStatus, botStatus.running]);
+    const timer = setInterval(() => {
+      fetchBotStatus();
+      if (botStatus.running) {
+        fetchJobs(); // Update the tracking feed live while bot runs
+      }
+    }, intervalTime);
+    return () => clearInterval(timer);
+  }, [botStatus.running, fetchBotStatus, fetchJobs]);
 
   // Auto-scroll logs terminal to bottom unless scroll is locked
   // Uses scrollTop on the container div — NOT scrollIntoView which scrolls the whole page
@@ -130,15 +142,43 @@ export default function Dashboard() {
     }
   }, [localLogsBuffer, showLogsPanel, terminalScrollLocked]);
 
-  // Refresh jobs list automatically when bot finishes a run
+  // Track job count to alert if no new jobs were found
   useEffect(() => {
-    if (!botStatus.running && botStatus.lastRun) {
-      fetchJobs();
+    if (botStatus.running && !wasRunningRef.current) {
+      // Run just started
+      initialJobCountRef.current = jobs.length;
+      wasRunningRef.current = true;
+    } else if (!botStatus.running && wasRunningRef.current) {
+      // Run just finished
+      wasRunningRef.current = false;
+      fetchJobs().then(newJobs => {
+        if (newJobs && initialJobCountRef.current !== null) {
+          if (newJobs.length === initialJobCountRef.current) {
+            alert('Sweep Complete: No new jobs were found in this run.');
+          }
+        }
+      });
     }
-  }, [botStatus.running, botStatus.lastRun, fetchJobs]);
+  }, [botStatus.running, fetchJobs, jobs.length]);
 
   const runBot = async () => {
     if (botStatus.running) return;
+
+    try {
+      const configRes = await fetch("/api/config");
+      const configData = await configRes.json();
+      
+      const hasEmail = !!configData.naukriEmail;
+      const hasResume = !!configData.resume?.path;
+
+      if (!hasEmail || !hasResume) {
+        alert("Action Required: You must provide your Hunter (Naukri) email, password, and upload a resume in the Settings page before running the bot.");
+        return;
+      }
+    } catch (e) {
+      console.error("Failed to fetch config for validation", e);
+    }
+
     setBotStatus(s => ({ ...s, running: true }));
     setShowLogsPanel(true);
     setTerminalScrollLocked(true);
@@ -151,6 +191,32 @@ export default function Dashboard() {
     } catch {}
   };
 
+  const toggleHeadless = async () => {
+    const newValue = !showBrowser;
+    setShowBrowser(newValue);
+    try {
+      await fetch("/api/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ headless: !newValue })
+      });
+    } catch (e) { console.error(e); }
+  };
+
+  const toggleBotEnabled = async () => {
+    const newValue = !botEnabled;
+    setBotEnabled(newValue);
+    try {
+      await fetch("/api/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ botEnabled: newValue })
+      });
+    } catch (e) { console.error(e); }
+  };
+
+  const renderResumeChecklist = (checklistStr: string | null, jobId?: string) => { };
+
   const resetFilters = () => {
     setSearchQuery("");
     setStatusFilter("ALL");
@@ -159,6 +225,46 @@ export default function Dashboard() {
   };
 
   const hasActiveFilters = searchQuery !== "" || statusFilter !== "ALL" || scoreFilter !== "ALL" || sortBy !== "NEWEST";
+
+  const downloadJobsExcel = () => {
+    const rows = filteredAndSortedJobs.map((job, idx) => ({
+      "#": idx + 1,
+      "Title": job.title,
+      "Company": job.company,
+      "Location": job.location || "",
+      "Status": job.status || "Not Applied",
+      "Match Decision": job.matchDecision || "",
+      "Relevance Score": job.relevanceScore ?? 0,
+      "Posted": job.posted || "",
+      "Scouted At": job.capturedAt ? new Date(job.capturedAt).toLocaleString("en-IN") : "",
+      "Last Seen": job.lastSeenAt ? new Date(job.lastSeenAt).toLocaleString("en-IN") : "",
+      "Applied At": job.appliedAt ? new Date(job.appliedAt).toLocaleString("en-IN") : "",
+      "Job URL": job.url || "",
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    // Auto column widths
+    const colWidths = Object.keys(rows[0] || {}).map(k => ({ wch: Math.max(k.length, 18) }));
+    ws["!cols"] = colWidths;
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Jobs");
+    XLSX.writeFile(wb, `hunter-jobs-${new Date().toISOString().slice(0,10)}.xlsx`);
+  };
+
+  const downloadResume = async () => {
+    try {
+      const res = await fetch("/api/resume");
+      if (!res.ok) throw new Error("Resume not found");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "master_resume.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Resume not available. Please upload one via Settings.");
+    }
+  };
 
   const totalJobs = jobs.length;
   const strongMatches = jobs.filter(j => j.relevanceScore >= 80 || j.matchDecision === 'Strong Match').length;
@@ -178,6 +284,23 @@ export default function Dashboard() {
     if (!iso) return '—';
     const d = new Date(iso);
     return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Always-fresh relative time — recalculated from the real capturedAt timestamp
+  const timeAgo = (iso?: string) => {
+    if (!iso) return 'Unknown';
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    const weeks = Math.floor(days / 7);
+    const months = Math.floor(days / 30);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    if (weeks < 5) return `${weeks}w ago`;
+    return `${months}mo ago`;
   };
 
   const toggleTask = (jobId: string, lineIndex: number) => {
@@ -268,8 +391,8 @@ export default function Dashboard() {
       // 1. Search Query
       const query = searchQuery.toLowerCase().trim();
       if (query) {
-        const matchesTitle = job.title.toLowerCase().includes(query);
-        const matchesCompany = job.company.toLowerCase().includes(query);
+        const matchesTitle = job.title?.toLowerCase().includes(query) ?? false;
+        const matchesCompany = job.company?.toLowerCase().includes(query) ?? false;
         const matchesLoc = (job.location || '').toLowerCase().includes(query);
         if (!matchesTitle && !matchesCompany && !matchesLoc) return false;
       }
@@ -344,28 +467,18 @@ export default function Dashboard() {
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
           
-          {/* Status Indicators */}
-          <div className="flex items-center gap-3 bg-zinc-100 dark:bg-zinc-950/40 border border-border/50 px-4 py-2 rounded-xl backdrop-blur-md">
-            <div className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </div>
-            <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-300">Daemon Online</span>
-          </div>
-
-          {/* Headless toggle */}
-          <div className="flex items-center justify-between gap-3 bg-zinc-100 dark:bg-zinc-950/40 border border-border/50 px-4 py-2 rounded-xl backdrop-blur-md transition-colors hover:bg-zinc-200 dark:hover:bg-zinc-950/60">
-            <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
-              {showBrowser ? <Eye className="w-3.5 h-3.5 text-primary" /> : <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />}
-              Show Scraper Browser
+          {/* Master Bot Toggle */}
+          <div className={`flex items-center justify-between gap-3 border px-4 py-2 rounded-xl backdrop-blur-md transition-colors ${botEnabled ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-zinc-100 dark:bg-zinc-950/40 border-border/50 hover:bg-zinc-200 dark:hover:bg-zinc-950/60'}`}>
+            <span className={`text-xs font-bold flex items-center gap-1.5 ${botEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-700 dark:text-zinc-300'}`}>
+              <Zap className={`w-3.5 h-3.5 ${botEnabled ? 'text-emerald-500 fill-emerald-500' : 'text-muted-foreground'}`} />
+              {botEnabled ? 'Automachine Active' : 'Automachine Stopped'}
             </span>
             <button
               type="button"
-              disabled={botStatus.running}
-              onClick={() => setShowBrowser(!showBrowser)}
-              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-transparent transition-all ${showBrowser ? 'bg-primary' : 'bg-zinc-200 dark:bg-zinc-800'}`}
+              onClick={toggleBotEnabled}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-transparent transition-all ${botEnabled ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
             >
-              <span className={`pointer-events-none block h-3.5 w-3.5 rounded-full bg-white shadow ring-0 transition-transform ${showBrowser ? 'translate-x-4' : 'translate-x-0'}`} />
+              <span className={`pointer-events-none block h-3.5 w-3.5 rounded-full bg-white shadow ring-0 transition-transform ${botEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
             </button>
           </div>
 
@@ -578,15 +691,34 @@ export default function Dashboard() {
         <div className="lg:col-span-2 glass-panel rounded-2xl overflow-hidden border border-glass-border/30 bg-white/40 dark:bg-zinc-950/20 shadow-xl flex flex-col">
           
           {/* Section Header */}
-          <div className="px-6 py-5 border-b border-border/40 bg-zinc-100/50 dark:bg-zinc-900/10 flex items-center justify-between">
+          <div className="px-6 py-5 border-b border-border/40 bg-zinc-100/50 dark:bg-zinc-900/10 flex items-center justify-between gap-3 flex-wrap">
             <h3 className="font-heading font-bold text-base flex items-center gap-2.5 text-foreground/90">
               <FileText className="h-4.5 w-4.5 text-primary" /> Tracking Feed
             </h3>
-            <span className="text-xs font-semibold text-muted-foreground bg-zinc-100 dark:bg-zinc-900/40 px-2.5 py-1 rounded-lg border border-border/20">
-              {filteredAndSortedJobs.length === jobs.length 
-                ? `${jobs.length} tracked` 
-                : `${filteredAndSortedJobs.length} matches of ${jobs.length}`}
-            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-semibold text-muted-foreground bg-zinc-100 dark:bg-zinc-900/40 px-2.5 py-1 rounded-lg border border-border/20">
+                {filteredAndSortedJobs.length === jobs.length 
+                  ? `${jobs.length} tracked` 
+                  : `${filteredAndSortedJobs.length} matches of ${jobs.length}`}
+              </span>
+              <button
+                onClick={downloadResume}
+                title="Download Resume PDF"
+                className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/25 text-indigo-400 hover:bg-indigo-500/20 hover:border-indigo-500/40 transition-all cursor-pointer"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Resume PDF
+              </button>
+              <button
+                onClick={downloadJobsExcel}
+                disabled={filteredAndSortedJobs.length === 0}
+                title="Download Jobs as Excel"
+                className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
+              >
+                <FileSpreadsheet className="h-3.5 w-3.5" />
+                Export Excel
+              </button>
+            </div>
           </div>
 
           {/* Combined Toolbar Panel */}
@@ -769,7 +901,12 @@ export default function Dashboard() {
                         <td className="px-6 py-4.5 text-xs text-muted-foreground hidden md:table-cell">
                           <div className="flex flex-col gap-0.5 font-medium">
                             <span className="truncate max-w-[140px] text-[11px] text-zinc-600 dark:text-zinc-400">{job.location || 'Remote'}</span>
-                            <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">Posted: {job.posted || 'N/A'}</span>
+                            <span 
+                              className="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono"
+                              title={job.posted ? `Hunter posted: ${job.posted}` : 'No Hunter post date'}
+                            >
+                              Scouted: {timeAgo(job.capturedAt)}
+                            </span>
                           </div>
                         </td>
 
@@ -1083,7 +1220,7 @@ export default function Dashboard() {
                           className="w-full inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground font-bold h-11 rounded-xl text-xs transition-opacity hover:opacity-90 mt-2"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
-                          <span>Apply on Naukri Platform</span>
+                          <span>Apply on Hunter Platform</span>
                         </a>
                       )}
                     </motion.div>

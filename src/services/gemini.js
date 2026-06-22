@@ -56,13 +56,28 @@ Return ONLY a JSON object with this exact structure:
 }
 `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json'
+    let response;
+    let retries = 3;
+    let delay = 1000;
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json'
+          }
+        });
+        break;
+      } catch (err) {
+        if (attempt === retries) {
+          throw err;
+        }
+        console.warn(`[Gemini Service] generateContent failed (attempt ${attempt}). Retrying in ${delay}ms...`);
+        await new Promise(res => setTimeout(res, delay));
+        delay *= 2;
       }
-    });
+    }
 
     const result = JSON.parse(response.text);
     return {

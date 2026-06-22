@@ -23,7 +23,7 @@ export function Header() {
               <span className="text-white font-extrabold text-sm tracking-tighter">NB</span>
             </div>
             <span className="font-heading font-black tracking-tight text-lg bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent group-hover:text-primary transition-colors">
-              Naukri<span className="text-primary font-bold">Bot</span>
+              Hunter<span className="text-primary font-bold">Bot</span>
             </span>
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-semibold">

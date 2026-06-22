@@ -24,6 +24,7 @@ type Config = {
   schedulerEnabled: boolean;
   schedulerIntervalMin: number;
   qaMemory: Record<string, string>;
+  refreshProfile: boolean;
 };
 
 type TabType = "resume" | "credentials" | "scheduler" | "profile" | "discord" | "qa" | "danger";
@@ -43,7 +44,9 @@ export default function SettingsPage() {
     discordQaChannelId: "",
     schedulerEnabled: false,
     schedulerIntervalMin: 60,
-    qaMemory: {}
+    schedulerIntervalMin: 60,
+    qaMemory: {},
+    refreshProfile: true
   });
 
   const [publicKey, setPublicKey] = useState("");
@@ -101,11 +104,11 @@ export default function SettingsPage() {
     try {
       const payload = {
         embeds: [{
-          title: "🔔 Naukri Bot Webhook Diagnostic",
+          title: "🔔 Hunter Bot Webhook Diagnostic",
           description: "This is a successful connection diagnostic test triggered from your dashboard controller panel.",
           color: 6513905, // Indigo HSL equivalent
           timestamp: new Date().toISOString(),
-          footer: { text: "Naukri Automachine v1.1" }
+          footer: { text: "Hunter Automachine v1.1" }
         }]
       };
       
@@ -144,7 +147,9 @@ export default function SettingsPage() {
             discordQaChannelId: data.discordQaChannelId ?? "",
             schedulerEnabled: data.schedulerEnabled ?? false,
             schedulerIntervalMin: data.schedulerIntervalMin ?? 60,
-            qaMemory: data.applications?.qaMemory ?? {}
+            schedulerIntervalMin: data.schedulerIntervalMin ?? 60,
+            qaMemory: data.applications?.qaMemory ?? {},
+            refreshProfile: data.profile?.refreshProfile ?? true
           });
           setPublicKey(data.publicKey ?? "");
           if (data.resume?.resumeText) {
@@ -173,6 +178,7 @@ export default function SettingsPage() {
         schedulerEnabled: config.schedulerEnabled,
         schedulerIntervalMin: config.schedulerIntervalMin,
         applications: { qaMemory: config.qaMemory },
+        profile: { refreshProfile: config.refreshProfile },
         publicKey: publicKey
       };
 
@@ -298,13 +304,13 @@ export default function SettingsPage() {
   }
 
   const filteredQa = Object.entries(config.qaMemory).filter(([k, v]) => 
-    k.toLowerCase().includes(qaSearch.toLowerCase()) || 
-    v.toLowerCase().includes(qaSearch.toLowerCase())
+    k?.toLowerCase().includes(qaSearch?.toLowerCase() || "") || 
+    v?.toLowerCase().includes(qaSearch?.toLowerCase() || "")
   );
 
   const tabs: { id: TabType; label: string; icon: any; desc: string }[] = [
     { id: "resume", label: "Master Resume", icon: BookOpen, desc: "Supabase cloud resume PDF storage" },
-    { id: "credentials", label: "Login Access", icon: Lock, desc: "Naukri email password & browser headless" },
+    { id: "credentials", label: "Login Access", icon: Lock, desc: "Hunter email password & browser headless" },
     { id: "scheduler", label: "Sweeper Timer", icon: Calendar, desc: "Auto scan sweep frequency configuration" },
     { id: "profile", label: "ATS profile & tags", icon: Sliders, desc: "Keywords and manual screening values" },
     { id: "discord", label: "Discord integration", icon: BellRing, desc: "Webhook channels and gateway bots" },
@@ -447,7 +453,7 @@ export default function SettingsPage() {
                   >
                     <div className="border-b border-zinc-900 pb-3">
                       <h2 className="text-base font-heading font-black text-zinc-100 flex items-center gap-2">
-                        <Lock className="w-4.5 h-4.5 text-primary" /> Naukri Login Credentials
+                        <Lock className="w-4.5 h-4.5 text-primary" /> Hunter Login Credentials
                       </h2>
                       <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
                         Securely store access emails and password. Encryption is run client-side.
@@ -456,7 +462,7 @@ export default function SettingsPage() {
 
                     <div className="grid gap-5 md:grid-cols-2">
                       <div className="space-y-2">
-                        <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider pl-0.5">Naukri Login Email</label>
+                        <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider pl-0.5">Hunter Login Email</label>
                         <input
                           type="email"
                           value={config.naukriEmail}
@@ -584,6 +590,20 @@ export default function SettingsPage() {
                         </div>
                       </div>
                     )}
+                    <div className="flex items-center justify-between bg-zinc-900/20 border border-zinc-900 rounded-xl p-4.5 mt-6">
+                      <div className="space-y-0.5 pr-4">
+                        <span className="text-xs font-bold text-zinc-200">Stealth Background Mode (Headless)</span>
+                        <p className="text-[10px] text-muted-foreground font-medium">Run browser invisibly in the background. Turn OFF to watch the bot work.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setConfig({ ...config, headless: !config.headless })}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border border-transparent transition-all focus:outline-none ${config.headless ? 'bg-primary' : 'bg-zinc-800'}`}
+                      >
+                        <span className={`pointer-events-none block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform ${config.headless ? 'translate-x-5' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+
                   </motion.div>
                 )}
 
@@ -620,6 +640,23 @@ export default function SettingsPage() {
                           onChange={(e) => setConfig({ ...config, careerStartDate: e.target.value })}
                           className="flex h-11 w-full rounded-xl border border-border/50 bg-zinc-900/30 px-4 text-xs focus:outline-none"
                         />
+                      </div>
+
+                      {/* Auto-Bump Profile */}
+                      <div className="space-y-2 flex flex-col justify-center border border-zinc-900 bg-zinc-900/10 p-4 rounded-xl">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider pl-0.5">Auto-Bump Profile</label>
+                            <p className="text-[10px] text-muted-foreground font-medium pl-0.5">Updates profile timestamp on every run to boost SEO.</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setConfig({ ...config, refreshProfile: !config.refreshProfile })}
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border border-transparent transition-all focus:outline-none ${config.refreshProfile ? 'bg-primary' : 'bg-zinc-800'}`}
+                          >
+                            <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out ${config.refreshProfile ? 'translate-x-6' : 'translate-x-1'}`} />
+                          </button>
+                        </div>
                       </div>
                     </div>
 

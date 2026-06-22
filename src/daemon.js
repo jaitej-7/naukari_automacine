@@ -159,7 +159,7 @@ class RunLogger {
 }
 
 // Spawns the automation script
-async function executeRun(runId, headless) {
+async function executeRun(runId, headless, type = 'SWEEP') {
   activeRunId = runId;
   console.log(`[Daemon] Executing bot run: ${runId} (headless: ${headless})`);
 
@@ -173,9 +173,9 @@ async function executeRun(runId, headless) {
     });
 
     const logger = new RunLogger(runId);
-    logger.log(`Bot run initiated on local runner.`);
+    logger.log(`Bot run initiated on local runner. Type: ${type}`);
 
-    const args = ['src/naukri-automation.js'];
+    const args = [type === 'REFRESH' ? 'src/refresh-profile.js' : 'src/naukri-automation.js'];
     if (headless) {
       args.push('--headless');
     } else {
@@ -234,10 +234,17 @@ async function checkScheduler() {
 
   try {
     const config = await prisma.configuration.findUnique({ where: { id: 1 } });
-    if (!config || !config.schedulerEnabled) return;
+    if (!config || !config.botEnabled) return;
 
-    // Get the latest run
+    // Time constraint: only run between 8:00 AM and 9:00 PM (21:00) IST
+    const utcHour = new Date().getUTCHours();
+    const utcMin = new Date().getUTCMinutes();
+    let istHour = (utcHour + 5 + Math.floor((utcMin + 30) / 60)) % 24;
+    if (istHour < 8 || istHour >= 21) return;
+
+    // Get the latest SWEEP run
     const latestRun = await prisma.botRun.findFirst({
+      where: { type: 'SWEEP' },
       orderBy: { triggeredAt: 'desc' }
     });
 
@@ -259,12 +266,60 @@ async function checkScheduler() {
       await prisma.botRun.create({
         data: {
           status: 'queued',
+          type: 'SWEEP',
           headless: config.headless
         }
       });
     }
   } catch (err) {
     console.error('[Scheduler] Error during schedule check:', err.message);
+  }
+}
+
+// Background scheduler check for Profile Refresh
+async function checkProfileRefreshScheduler() {
+  if (activeRunId) return;
+
+  try {
+    const config = await prisma.configuration.findUnique({ where: { id: 1 } });
+    if (!config || !config.botEnabled) return;
+
+    // Time constraint: only run between 8:00 AM and 9:00 PM (21:00) IST
+    const utcHour = new Date().getUTCHours();
+    const utcMin = new Date().getUTCMinutes();
+    let istHour = (utcHour + 5 + Math.floor((utcMin + 30) / 60)) % 24;
+    if (istHour < 8 || istHour >= 21) return;
+
+    const latestRun = await prisma.botRun.findFirst({
+      where: { type: 'REFRESH' },
+      orderBy: { triggeredAt: 'desc' }
+    });
+
+    const intervalMs = (config.profileRefreshIntervalMin || 10) * 60 * 1000;
+    const now = Date.now();
+
+    let shouldQueue = false;
+    if (!latestRun) {
+      shouldQueue = true;
+    } else {
+      const lastTriggered = new Date(latestRun.triggeredAt).getTime();
+      if (now - lastTriggered >= intervalMs && latestRun.status !== 'queued' && latestRun.status !== 'in-progress') {
+        shouldQueue = true;
+      }
+    }
+
+    if (shouldQueue) {
+      console.log(`[Scheduler] Queueing profile refresh (${config.profileRefreshIntervalMin} min interval)...`);
+      await prisma.botRun.create({
+        data: {
+          status: 'queued',
+          type: 'REFRESH',
+          headless: config.headless
+        }
+      });
+    }
+  } catch (err) {
+    console.error('[Scheduler] Error during profile refresh schedule check:', err.message);
   }
 }
 
@@ -287,12 +342,13 @@ async function pollLoop() {
       });
 
       if (queuedRun) {
-        await executeRun(queuedRun.id, queuedRun.headless);
+        await executeRun(queuedRun.id, queuedRun.headless, queuedRun.type);
       }
     }
     
-    // Check background scheduler
+    // Check background schedulers
     await checkScheduler();
+    await checkProfileRefreshScheduler();
   } catch (err) {
     console.error('[Daemon] Loop execution error:', err.message);
   }

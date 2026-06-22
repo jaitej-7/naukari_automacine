@@ -23,8 +23,8 @@ const monoFont = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Naukri Automachine",
-  description: "Dashboard for Naukri Automachine",
+  title: "Hunter Automachine",
+  description: "Dashboard for Hunter Automachine",
 };
 
 export default function RootLayout({

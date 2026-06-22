@@ -49,8 +49,11 @@ export async function GET() {
       discordWebhookUrl: c.discordWebhookUrl,
       discordBotToken: c.discordBotToken,
       discordQaChannelId: c.discordQaChannelId,
+      discordQaChannelId: c.discordQaChannelId,
+      botEnabled: c.botEnabled,
       schedulerEnabled: c.schedulerEnabled,
-      schedulerIntervalMin: c.schedulerIntervalMin
+      schedulerIntervalMin: c.schedulerIntervalMin,
+      profileRefreshIntervalMin: c.profileRefreshIntervalMin
     };
 
     return NextResponse.json(config);
@@ -124,8 +127,10 @@ export async function POST(request: Request) {
       discordWebhookUrl: body.discordWebhookUrl ?? existing?.discordWebhookUrl ?? null,
       discordBotToken: body.discordBotToken ?? existing?.discordBotToken ?? null,
       discordQaChannelId: body.discordQaChannelId ?? existing?.discordQaChannelId ?? null,
-      schedulerEnabled: typeof body.schedulerEnabled === 'boolean' ? body.schedulerEnabled : (existing?.schedulerEnabled ?? false),
+      botEnabled: body.botEnabled ?? existing?.botEnabled ?? false,
+      schedulerEnabled: body.schedulerEnabled ?? existing?.schedulerEnabled ?? false,
       schedulerIntervalMin: body.schedulerIntervalMin ?? existing?.schedulerIntervalMin ?? 60,
+      profileRefreshIntervalMin: body.profileRefreshIntervalMin ?? existing?.profileRefreshIntervalMin ?? 10
     };
 
     await prisma.configuration.upsert({
