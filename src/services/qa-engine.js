@@ -50,6 +50,8 @@ export async function handleQuestionnaire(page, config, log, jobRow) {
     });
 
     if (!questionText.trim()) continue;
+    // Skip global site headers / search bars
+    if (questionText.toLowerCase().includes('search jobs here') || questionText.toLowerCase().includes('search jobs')) continue;
 
     console.log(`[Q&A Engine] Text/Select question: "${questionText}"`);
 
