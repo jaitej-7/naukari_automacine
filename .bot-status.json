@@ -1,6 +1,6 @@
 {
-  "running": true,
-  "lastRun": "2026-06-29T10:59:31.669Z",
-  "pid": 28824,
-  "log": "Bot started..."
+  "running": false,
+  "lastRun": "2026-06-29T11:44:37.612Z",
+  "pid": null,
+  "log": "Error: require is not defined"
 }

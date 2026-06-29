@@ -206,7 +206,7 @@ export default function Dashboard() {
     } catch (e) { console.error(e); }
   };
 
-  const toggleBotEnabled = async () => {
+  const toggleContinuousSweep = async () => {
     const newValue = !botEnabled;
     setBotEnabled(newValue);
     try {
@@ -216,6 +216,11 @@ export default function Dashboard() {
         body: JSON.stringify({ botEnabled: newValue })
       });
     } catch (e) { console.error(e); }
+
+    // If turning on, immediately trigger a sweep
+    if (newValue) {
+      runBot();
+    }
   };
 
   const renderResumeChecklist = (checklistStr: string | null, jobId?: string) => { };
@@ -469,18 +474,18 @@ export default function Dashboard() {
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
           
-          {/* Master Bot Toggle */}
-          <div className={`flex items-center justify-between gap-3 border px-4 py-2 rounded-xl backdrop-blur-md transition-colors ${botEnabled ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-zinc-100 dark:bg-zinc-950/40 border-border/50 hover:bg-zinc-200 dark:hover:bg-zinc-950/60'}`}>
-            <span className={`text-xs font-bold flex items-center gap-1.5 ${botEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-700 dark:text-zinc-300'}`}>
-              <Zap className={`w-3.5 h-3.5 ${botEnabled ? 'text-emerald-500 fill-emerald-500' : 'text-muted-foreground'}`} />
-              {botEnabled ? 'Automachine Active' : 'Automachine Stopped'}
+          {/* Stealth Mode Toggle */}
+          <div className={`flex items-center justify-between gap-3 border px-4 py-2 rounded-xl backdrop-blur-md transition-colors ${!showBrowser ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-zinc-100 dark:bg-zinc-950/40 border-border/50 hover:bg-zinc-200 dark:hover:bg-zinc-950/60'}`}>
+            <span className={`text-xs font-bold flex items-center gap-1.5 ${!showBrowser ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300'}`}>
+              <EyeOff className={`w-3.5 h-3.5 ${!showBrowser ? 'text-indigo-500 fill-indigo-500' : 'text-muted-foreground'}`} />
+              {!showBrowser ? 'Stealth Active' : 'Stealth Off'}
             </span>
             <button
               type="button"
-              onClick={toggleBotEnabled}
-              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-transparent transition-all ${botEnabled ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+              onClick={toggleHeadless}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-transparent transition-all ${!showBrowser ? 'bg-indigo-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
             >
-              <span className={`pointer-events-none block h-3.5 w-3.5 rounded-full bg-white shadow ring-0 transition-transform ${botEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
+              <span className={`pointer-events-none block h-3.5 w-3.5 rounded-full bg-white shadow ring-0 transition-transform ${!showBrowser ? 'translate-x-4' : 'translate-x-0'}`} />
             </button>
           </div>
 
@@ -488,20 +493,23 @@ export default function Dashboard() {
           <motion.button
             whileHover={{ scale: 1.03, y: -1 }}
             whileTap={{ scale: 0.97 }}
-            onClick={runBot}
-            disabled={botStatus.running}
-            className="relative group inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-primary to-indigo-600 px-6 py-2.5 text-xs font-bold text-white transition-all disabled:opacity-50 disabled:pointer-events-none shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 overflow-hidden cursor-pointer"
+            onClick={toggleContinuousSweep}
+            className={`relative group inline-flex items-center justify-center rounded-xl px-6 py-2.5 text-xs font-bold text-white transition-all shadow-md overflow-hidden cursor-pointer ${
+              botEnabled 
+                ? 'bg-gradient-to-r from-red-500 to-rose-600 shadow-red-500/20 hover:shadow-red-500/30' 
+                : 'bg-gradient-to-r from-primary to-indigo-600 shadow-primary/20 hover:shadow-primary/30'
+            }`}
           >
             <span className="relative flex items-center gap-2">
-              {botStatus.running ? (
+              {botEnabled ? (
                 <>
-                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  <span>Sweeping Jobs...</span>
+                  <div className="h-3.5 w-3.5 animate-pulse rounded-full bg-white/30 border border-white/50" />
+                  <span>Stop Continuous Sweep</span>
                 </>
               ) : (
                 <>
                   <Play className="h-3.5 w-3.5 fill-current" />
-                  <span>Start Sweep Run</span>
+                  <span>Start Continuous Sweep</span>
                 </>
               )}
             </span>
