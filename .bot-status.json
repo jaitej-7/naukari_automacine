@@ -1,6 +1,6 @@
 {
-  "running": false,
-  "lastRun": "2026-06-22T09:00:12.927Z",
-  "pid": null,
-  "log": "Done. Relevant jobs found: 61\nReport: D:\\hunter.1\\reports\\jobs-latest.csv"
+  "running": true,
+  "lastRun": "2026-06-29T10:59:31.669Z",
+  "pid": 28824,
+  "log": "Bot started..."
 }

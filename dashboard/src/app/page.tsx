@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+
 type Job = {
   id: string;
   title: string;
@@ -71,6 +72,8 @@ export default function Dashboard() {
   const [terminalFontSize, setTerminalFontSize] = useState<"sm" | "md" | "lg">("sm");
   const [terminalScrollLocked, setTerminalScrollLocked] = useState(true);
   const [localLogsBuffer, setLocalLogsBuffer] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<'ALL' | 'APPLIED' | 'PENDING_QA' | 'INTERNSHIPS' | 'MANUAL_APPLY'>('ALL');
+  const [seenCounts, setSeenCounts] = useState<Record<string, number>>({});
   
   // AI Slide-over drawer tab
   const [drawerTab, setDrawerTab] = useState<"checklist" | "details">("checklist");
@@ -401,7 +404,13 @@ export default function Dashboard() {
       if (statusFilter !== 'ALL') {
         if (job.status !== statusFilter) return false;
       }
-
+        // 4. Tab Filter
+        if (activeTab !== 'ALL') {
+          if (activeTab === 'APPLIED' && job.status !== 'Applied') return false;
+          if (activeTab === 'PENDING_QA' && job.status !== 'Pending Q&A') return false;
+          if (activeTab === 'INTERNSHIPS' && !(job.title?.toLowerCase().includes('intern') || (job as any).isInternship)) return false;
+          if (activeTab === 'MANUAL_APPLY' && job.status !== 'Manual Apply Needed') return false;
+        }
       // 3. Relevance Score Filter
       if (scoreFilter !== 'ALL') {
         const score = job.relevanceScore || 0;
@@ -414,19 +423,12 @@ export default function Dashboard() {
     })
     .sort((a, b) => {
       if (sortBy === 'NEWEST') {
-        const ageA = parsePostedAge(a.posted);
-        const ageB = parsePostedAge(b.posted);
-        if (ageA !== ageB) return ageA - ageB;
-        
+        // Newest first – based on most recent activity timestamp (capturedAt or lastSeenAt)
         const timeA = new Date(a.lastSeenAt || a.capturedAt || 0).getTime();
         const timeB = new Date(b.lastSeenAt || b.capturedAt || 0).getTime();
         return timeB - timeA;
       }
       if (sortBy === 'OLDEST') {
-        const ageA = parsePostedAge(a.posted);
-        const ageB = parsePostedAge(b.posted);
-        if (ageA !== ageB) return ageB - ageA;
-        
         const timeA = new Date(a.lastSeenAt || a.capturedAt || 0).getTime();
         const timeB = new Date(b.lastSeenAt || b.capturedAt || 0).getTime();
         return timeA - timeB;
@@ -795,9 +797,41 @@ export default function Dashboard() {
               </AnimatePresence>
             </div>
           </div>
-
+          
           {/* Job Feed List Container */}
-          <div className="overflow-x-auto flex-1">
+          <div className="px-6 pt-4 flex space-x-2">
+            {(() => {
+              const tabCounts: Record<string, number> = {
+                ALL: jobs.length,
+                APPLIED: jobs.filter(j => j.status === 'Applied').length,
+                PENDING_QA: jobs.filter(j => j.status === 'Pending Q&A').length,
+                MANUAL_APPLY: jobs.filter(j => j.status === 'Manual Apply Needed').length,
+                INTERNSHIPS: jobs.filter(j => j.title?.toLowerCase().includes('intern') || (j as any).isInternship).length
+              };
+
+              return (['ALL', 'APPLIED', 'PENDING_QA', 'MANUAL_APPLY', 'INTERNSHIPS'] as const).map(tab => {
+                const unseen = tabCounts[tab] - (seenCounts[tab] || 0);
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => {
+                      setActiveTab(tab);
+                      setSeenCounts(prev => ({ ...prev, [tab]: tabCounts[tab] }));
+                    }}
+                    className={`px-4 py-2 rounded-lg text-[11px] font-bold transition-all flex items-center ${activeTab === tab ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-zinc-100 dark:bg-zinc-900/50 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800'}`}
+                  >
+                    {tab.replace('_', ' ')}
+                    {unseen > 0 && (
+                      <span className={`ml-2 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${activeTab === tab ? 'bg-white/20 text-white' : 'bg-red-500 text-white'}`}>
+                        {unseen}
+                      </span>
+                    )}
+                  </button>
+                );
+              });
+            })()}
+          </div>
+          <div className="overflow-x-auto flex-1 mt-2">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-border/30 bg-muted/40 dark:bg-zinc-950/15">

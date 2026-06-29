@@ -44,7 +44,7 @@ export default function SettingsPage() {
     discordQaChannelId: "",
     schedulerEnabled: false,
     schedulerIntervalMin: 60,
-    schedulerIntervalMin: 60,
+
     qaMemory: {},
     refreshProfile: true
   });
@@ -147,7 +147,7 @@ export default function SettingsPage() {
             discordQaChannelId: data.discordQaChannelId ?? "",
             schedulerEnabled: data.schedulerEnabled ?? false,
             schedulerIntervalMin: data.schedulerIntervalMin ?? 60,
-            schedulerIntervalMin: data.schedulerIntervalMin ?? 60,
+
             qaMemory: data.applications?.qaMemory ?? {},
             refreshProfile: data.profile?.refreshProfile ?? true
           });
@@ -314,7 +314,7 @@ export default function SettingsPage() {
     { id: "scheduler", label: "Sweeper Timer", icon: Calendar, desc: "Auto scan sweep frequency configuration" },
     { id: "profile", label: "ATS profile & tags", icon: Sliders, desc: "Keywords and manual screening values" },
     { id: "discord", label: "Discord integration", icon: BellRing, desc: "Webhook channels and gateway bots" },
-    { id: "qa", label: "Q&A Cache Cache", icon: Brain, desc: "AI screening answers history editor" },
+    { id: "qa", label: "Saved Q&A Answers", icon: Brain, desc: "AI screening answers history editor" },
     { id: "danger", label: "Danger zone", icon: Trash2, desc: "Wipe tracker logs history" }
   ];
 

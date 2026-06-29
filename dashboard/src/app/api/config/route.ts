@@ -49,7 +49,7 @@ export async function GET() {
       discordWebhookUrl: c.discordWebhookUrl,
       discordBotToken: c.discordBotToken,
       discordQaChannelId: c.discordQaChannelId,
-      discordQaChannelId: c.discordQaChannelId,
+
       botEnabled: c.botEnabled,
       schedulerEnabled: c.schedulerEnabled,
       schedulerIntervalMin: c.schedulerIntervalMin,

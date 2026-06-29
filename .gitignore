@@ -12,3 +12,4 @@ job-resumes/
 config.json
 database.sqlite
 /src/generated/prisma
+logs/

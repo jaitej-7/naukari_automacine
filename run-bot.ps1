@@ -1,7 +1,7 @@
 # Naukri Automation - Scheduled Runner
 # This script is triggered every 3 hours by Windows Task Scheduler
 
-$scriptDir = "D:\Naukari automachine"
+$scriptDir = "d:\hunter.1"
 $logFile = "$scriptDir\logs\scheduler.log"
 
 # Ensure logs directory exists

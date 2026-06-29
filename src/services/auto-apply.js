@@ -2,6 +2,26 @@ import { handleQuestionnaire } from './qa-engine.js';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function autoApply(context, jobRow, log, config) {
+  // Detect internship listings early and skip auto‑apply
+  const titleLower = (jobRow.title || '').toLowerCase();
+  const isInternship = /\bintern\b/.test(titleLower);
+  if (isInternship) {
+    // Record internship job for the new Internships tab
+    const fs = require('fs');
+    const path = require('path');
+    const internshipsPath = path.join(__dirname, '../../reports/internships.csv');
+    const line = `"${new Date().toISOString()}","${jobRow.title}","${jobRow.company}","${jobRow.url}"\n`;
+    try {
+      if (!fs.existsSync(internshipsPath)) {
+        fs.writeFileSync(internshipsPath, 'capturedAt,title,company,url\n');
+      }
+      fs.appendFileSync(internshipsPath, line);
+      log.actions.push(`Recorded internship job ${jobRow.url}`);
+    } catch (e) {
+      log.warnings.push(`Failed to record internship job ${jobRow.url}: ${e.message}`);
+    }
+    return 'internship';
+  }
   const jobUrl = jobRow.url;
   const page = await context.newPage();
   try {
@@ -36,6 +56,19 @@ export async function autoApply(context, jobRow, log, config) {
 
     // If only regular Apply (external redirect), flag for manual action
     if (!hasEasyApply && hasRegularApply) {
+      // Record manual apply needed job
+      const fs = require('fs');
+      const path = require('path');
+      const manualPath = path.join(__dirname, '../../reports/manual-apply.json');
+      const entry = { capturedAt: new Date().toISOString(), title: jobRow.title, company: jobRow.company, url: jobRow.url };
+      try {
+        const existing = fs.existsSync(manualPath) ? JSON.parse(fs.readFileSync(manualPath, 'utf8')) : [];
+        existing.push(entry);
+        fs.writeFileSync(manualPath, JSON.stringify(existing, null, 2));
+        log.actions.push(`Recorded manual apply job ${jobRow.url}`);
+      } catch (e) {
+        log.warnings.push(`Failed to record manual apply job ${jobRow.url}: ${e.message}`);
+      }
       log.warnings.push(`MANUAL APPLY NEEDED: ${jobUrl} — only external Apply button found (no Easy Apply)`);
       return 'external';
     }
@@ -69,6 +102,20 @@ export async function autoApply(context, jobRow, log, config) {
         if (await match.isVisible({ timeout: 3000 }).catch(() => false)) {
           console.log(`[AutoApply] Success confirmed via text pattern: ${pattern}`);
           log.actions.push(`Successfully auto-applied to ${jobUrl}`);
+    // Record applied job
+    const fs = require('fs');
+    const path = require('path');
+    const appliedPath = path.join(__dirname, '../../reports/applied-jobs.csv');
+    const line = `"${new Date().toISOString()}","${jobRow.title}","${jobRow.company}","${jobRow.url}"\n`;
+    try {
+      if (!fs.existsSync(appliedPath)) {
+        fs.writeFileSync(appliedPath, 'appliedAt,title,company,url\n');
+      }
+      fs.appendFileSync(appliedPath, line);
+      log.actions.push(`Recorded applied job ${jobRow.url}`);
+    } catch (e) {
+      log.warnings.push(`Failed to record applied job ${jobRow.url}: ${e.message}`);
+    }
           return true;
         }
       } catch (err) { console.error('Caught error:', err.message); }
