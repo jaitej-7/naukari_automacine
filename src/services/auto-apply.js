@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { handleQuestionnaire } from './qa-engine.js';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -7,9 +9,7 @@ export async function autoApply(context, jobRow, log, config) {
   const isInternship = /\bintern\b/.test(titleLower);
   if (isInternship) {
     // Record internship job for the new Internships tab
-    const fs = require('fs');
-    const path = require('path');
-    const internshipsPath = path.join(__dirname, '../../reports/internships.csv');
+    const internshipsPath = path.join(process.cwd(), 'reports/internships.csv');
     const line = `"${new Date().toISOString()}","${jobRow.title}","${jobRow.company}","${jobRow.url}"\n`;
     try {
       if (!fs.existsSync(internshipsPath)) {
@@ -32,34 +32,32 @@ export async function autoApply(context, jobRow, log, config) {
     await sleep(3000);
 
     // --- Detect available button types and status ---
-    const { hasEasyApply, hasRegularApply, alreadyApplied } = await page.evaluate(() => {
+    const { hasInternalApply, hasExternalApply, alreadyApplied } = await page.evaluate(() => {
       const allBtns = Array.from(document.querySelectorAll('button, a, div[class*="apply"]'));
       
       const alreadyApplied = allBtns.some(el => /^applied$/i.test((el.textContent || '').trim()));
-      const hasEasyApply = allBtns.some(el => /easy apply/i.test((el.textContent || '').trim()));
-      const hasRegularApply = allBtns.some(el => /^apply now$|^apply$|^apply on company site$/i.test((el.textContent || '').trim()));
+      const hasInternalApply = allBtns.some(el => /^apply now$|^apply$|^easy apply$/i.test((el.textContent || '').trim()));
+      const hasExternalApply = allBtns.some(el => /company site/i.test((el.textContent || '').trim()));
       
-      return { hasEasyApply, hasRegularApply, alreadyApplied };
+      return { hasInternalApply, hasExternalApply, alreadyApplied };
     });
 
-    console.log(`[AutoApply] Buttons detected — Easy Apply: ${hasEasyApply}, Regular Apply: ${hasRegularApply}, Already Applied: ${alreadyApplied}`);
+    console.log(`[AutoApply] Buttons detected — Internal Apply: ${hasInternalApply}, External Apply: ${hasExternalApply}, Already Applied: ${alreadyApplied}`);
 
     if (alreadyApplied) {
       log.actions.push(`Skipped ${jobUrl} — Already applied.`);
       return true; // We consider this a "success" so it doesn't get stuck in the queue
     }
 
-    if (!hasEasyApply && !hasRegularApply) {
+    if (!hasInternalApply && !hasExternalApply) {
       log.warnings.push(`No apply button found on ${jobUrl} (Job might be closed, expired, or require external platform)`);
       return 'expired';
     }
 
-    // If only regular Apply (external redirect), flag for manual action
-    if (!hasEasyApply && hasRegularApply) {
+    // If only external Apply, flag for manual action
+    if (!hasInternalApply && hasExternalApply) {
       // Record manual apply needed job
-      const fs = require('fs');
-      const path = require('path');
-      const manualPath = path.join(__dirname, '../../reports/manual-apply.json');
+      const manualPath = path.join(process.cwd(), 'reports/manual-apply.json');
       const entry = { capturedAt: new Date().toISOString(), title: jobRow.title, company: jobRow.company, url: jobRow.url };
       try {
         const existing = fs.existsSync(manualPath) ? JSON.parse(fs.readFileSync(manualPath, 'utf8')) : [];
@@ -69,21 +67,21 @@ export async function autoApply(context, jobRow, log, config) {
       } catch (e) {
         log.warnings.push(`Failed to record manual apply job ${jobRow.url}: ${e.message}`);
       }
-      log.warnings.push(`MANUAL APPLY NEEDED: ${jobUrl} — only external Apply button found (no Easy Apply)`);
+      log.warnings.push(`MANUAL APPLY NEEDED: ${jobUrl} — only external Apply button found`);
       return 'external';
     }
 
-    // --- Click the Easy Apply button using Playwright locator (fires real mouse events for React) ---
-    console.log('[AutoApply] Clicking Easy Apply via Playwright locator...');
-    const easyApplyLocator = page.locator('button, a[role="button"]').filter({ hasText: /easy apply/i }).first();
-    if (await easyApplyLocator.count() === 0) {
-      log.warnings.push(`Could not click Easy Apply on ${jobUrl}`);
+    // --- Click the Internal Apply button using Playwright locator (fires real mouse events for React) ---
+    console.log('[AutoApply] Clicking Apply via Playwright locator...');
+    const applyLocator = page.locator('button, a[role="button"]').filter({ hasText: /^apply now$|^apply$|^easy apply$/i }).first();
+    if (await applyLocator.count() === 0) {
+      log.warnings.push(`Could not click Apply on ${jobUrl}`);
       return false;
     }
-    await easyApplyLocator.scrollIntoViewIfNeeded();
-    await easyApplyLocator.click({ force: true });
+    await applyLocator.scrollIntoViewIfNeeded();
+    await applyLocator.click({ force: true });
 
-    console.log(`[AutoApply] Clicked Easy Apply, waiting for response...`);
+    console.log(`[AutoApply] Clicked Apply, waiting for response...`);
     await sleep(4000);
 
     // --- Broad success detection ---
@@ -103,9 +101,7 @@ export async function autoApply(context, jobRow, log, config) {
           console.log(`[AutoApply] Success confirmed via text pattern: ${pattern}`);
           log.actions.push(`Successfully auto-applied to ${jobUrl}`);
     // Record applied job
-    const fs = require('fs');
-    const path = require('path');
-    const appliedPath = path.join(__dirname, '../../reports/applied-jobs.csv');
+    const appliedPath = path.join(process.cwd(), 'reports/applied-jobs.csv');
     const line = `"${new Date().toISOString()}","${jobRow.title}","${jobRow.company}","${jobRow.url}"\n`;
     try {
       if (!fs.existsSync(appliedPath)) {
