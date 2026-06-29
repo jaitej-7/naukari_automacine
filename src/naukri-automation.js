@@ -553,9 +553,20 @@ async function main() {
     launchOptions.userAgent = defaultUserAgent;
   }
 
-  const context = await chromium.launchPersistentContext(profileDir, launchOptions);
-
-  const page = context.pages()[0] || await context.newPage();
+  let context;
+  let page;
+  let browser;
+  
+  if (process.env.NAUKRI_COOKIES) {
+    console.log('[HF] Using injected cookies from Hugging Face secret');
+    browser = await chromium.launch(launchOptions);
+    const storageState = JSON.parse(process.env.NAUKRI_COOKIES);
+    context = await browser.newContext({ storageState });
+    page = await context.newPage();
+  } else {
+    context = await chromium.launchPersistentContext(profileDir, launchOptions);
+    page = context.pages()[0] || await context.newPage();
+  }
 
   try {
     console.log('Checking saved Hunter session.');
@@ -675,6 +686,9 @@ async function main() {
     await updateBotStatus(false, `Done. Relevant jobs found: ${jobs.length}\nReport: ${path.join(reportsDir, 'jobs-latest.csv')}`);
   } finally {
     await context.close();
+    if (typeof browser !== 'undefined' && browser) {
+      await browser.close();
+    }
   }
 }
 

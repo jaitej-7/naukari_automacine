@@ -1,0 +1,1287 @@
+{
+  "cookies": [
+    {
+      "name": "_t_ds",
+      "value": "15bc5f0d1781446855-1515bc5f0d-015bc5f0d",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1812982851.473397,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "J",
+      "value": "0",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1814281282.945365,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_t_ds",
+      "value": "391474110371675736931-1781446855.729",
+      "domain": ".logs.infoedgeindia.com",
+      "path": "/",
+      "expires": 1812982852.189671,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_ga",
+      "value": "GA1.1.11227530.1781446854",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1817305282.279618,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "nauk_rt",
+      "value": "7e1085af590f41428d5d3f7d7459cc38",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1812982885.168649,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "nauk_sid",
+      "value": "7e1085af590f41428d5d3f7d7459cc38",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1812982885.16883,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "nauk_otl",
+      "value": "7e1085af590f41428d5d3f7d7459cc38",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1812982885.168915,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "NKWAP",
+      "value": "63187e170d657e0c55f98365bea7683bc0dac3d92459b3f54a7f4ed07ad7a645a17faea29e95a5a4~63187e170d657e0c55f98365bea7683bc0dac3d92459b3f54a7f4ed07ad7a645a17faea29e95a5a4~1~0",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1812982881.879033,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "MYNAUKRI[UNID]",
+      "value": "10603b7293b24accafefc44d0283e19d",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1812982881.879083,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "nauk_ps",
+      "value": "default",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1814281218.268498,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "PS",
+      "value": "63187e170d657e0c55f98365bea7683bc0dac3d92459b3f54a7f4ed07ad7a645a17faea29e95a5a4",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1814281255.388901,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "tuuid",
+      "value": "500c45d7-b1f4-47c4-bb05-f25c4e9ac92a",
+      "domain": ".bidswitch.net",
+      "path": "/",
+      "expires": 1812982887.952176,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "c",
+      "value": "1781446891",
+      "domain": ".bidswitch.net",
+      "path": "/",
+      "expires": 1812982887.727358,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "tuuid_lu",
+      "value": "1781446891",
+      "domain": ".bidswitch.net",
+      "path": "/",
+      "expires": 1812982887.952306,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_auid",
+      "value": "xjj0qL7ODJWAajJe67guag",
+      "domain": ".c.appier.net",
+      "path": "/",
+      "expires": 1814241634.155685,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_gu",
+      "value": "CAESEIvuPX-ko1KnqAIPskrbG_w",
+      "domain": ".c.appier.net",
+      "path": "/",
+      "expires": 1785297634.155833,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "b",
+      "value": "6A2EB8EB392779442FD36FEF_",
+      "domain": ".blismedia.com",
+      "path": "/",
+      "expires": 1814245636.395286,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "everest_g_v2",
+      "value": "g_surferid~ai646wAG1AD12gAL",
+      "domain": ".everesttech.net",
+      "path": "/",
+      "expires": 1812982887.739538,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "smn_uid",
+      "value": "FN6jRaQjbnbNNsx1id4Zbilvb9TAqmQ",
+      "domain": ".ladsp.com",
+      "path": "/",
+      "expires": 1817265632.708267,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "bcookie",
+      "value": "\"v=2&caf49aa8-cfde-4ea5-850e-25bd31a047f4\"",
+      "domain": ".linkedin.com",
+      "path": "/",
+      "expires": 1812982887.740332,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_tracker",
+      "value": "%7B%22UUID%22%3A%22F5E5F2F4-7DB9-4268-06C0-F9DA8BC55268%22%7D",
+      "domain": ".travelaudience.com",
+      "path": "/",
+      "expires": 1815574886.822033,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "i",
+      "value": "ef05e807-57ee-4e96-817f-f95ce31fff3c|1781446891",
+      "domain": ".openx.net",
+      "path": "/",
+      "expires": 1813193204.255827,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "uid",
+      "value": "AZ7GgliGP4MXICkvsLc",
+      "domain": ".adtdp.com",
+      "path": "/",
+      "expires": 1816006888.15401,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "dynid",
+      "value": "AZ7GgliGP4MXICkvsLc",
+      "domain": ".adtdp.com",
+      "path": "/",
+      "expires": 1816006888.154187,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "C",
+      "value": "1",
+      "domain": ".adform.net",
+      "path": "/",
+      "expires": 1784038888.223267,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "tluid",
+      "value": "575117248393032541319",
+      "domain": ".3lift.com",
+      "path": "/",
+      "expires": 1790481636.384479,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "uid",
+      "value": "4831792051218545330",
+      "domain": ".adform.net",
+      "path": "/",
+      "expires": 1787889634.709256,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "idsp_c",
+      "value": "d7b8ad4a-baa0-4aa3-a18e-587a624f3dce",
+      "domain": ".inmobi.com",
+      "path": "/",
+      "expires": 1789222888.359214,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "t",
+      "value": "v_1c80b639-3a4a-4429-b809-09e61da95cc5",
+      "domain": ".uncn.jp",
+      "path": "/",
+      "expires": 1814241634.66785,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "mc",
+      "value": "6a2eb8ed-56d76-484bc-16ed9",
+      "domain": ".quantserve.com",
+      "path": "/",
+      "expires": 1815661289.817538,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "suid",
+      "value": "9258AA8414774C04B7118B974CA73360",
+      "domain": ".simpli.fi",
+      "path": "/",
+      "expires": 1813069289.82799,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "g",
+      "value": "wZd0eQ4GY1BztsBFUL2T_1781446893330",
+      "domain": ".creativecdn.com",
+      "path": "/",
+      "expires": 1812982889.846592,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ts",
+      "value": "1781446893",
+      "domain": ".creativecdn.com",
+      "path": "/",
+      "expires": 1812982889.846769,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None",
+      "partitionKey": "https://naukri.com",
+      "_crHasCrossSiteAncestor": true
+    },
+    {
+      "name": "uid",
+      "value": "acc8dcfd-433c-4552-b31e-b2d8462ab750",
+      "domain": ".criteo.com",
+      "path": "/",
+      "expires": 1815142889.864395,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "receive-cookie-deprecation",
+      "value": "1",
+      "domain": ".rubiconproject.com",
+      "path": "/",
+      "expires": 1790481634.450418,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None",
+      "partitionKey": "https://naukri.com",
+      "_crHasCrossSiteAncestor": true
+    },
+    {
+      "name": "A3",
+      "value": "d=AQABBO24LmoCEPmf-rpBW81LY90uakz_kSwFEgEBAQEKMGo4alkLiHsF_eMDAA&S=AQAAAob3sTGxHWcFg4Hv6R9DNHw",
+      "domain": ".yahoo.com",
+      "path": "/",
+      "expires": 1814263234.219448,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "tuuid",
+      "value": "0f5123e1-36db-4c35-ba28-85b84c4203a9",
+      "domain": ".360yield.com",
+      "path": "/",
+      "expires": 1789222890.009092,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "tuuid_lu",
+      "value": "1781446893",
+      "domain": ".360yield.com",
+      "path": "/",
+      "expires": 1789222890.009232,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "gid",
+      "value": "0e0737ec86dfb364f5ac4c7b4d200ff3",
+      "domain": ".gsspat.jp",
+      "path": "/",
+      "expires": 1817265632.795098,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "SCM",
+      "value": "029965cad4",
+      "domain": ".smaato.net",
+      "path": "/",
+      "expires": 1784520034.436833,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "SCMg",
+      "value": "029965cad4",
+      "domain": ".smaato.net",
+      "path": "/",
+      "expires": 1784520034.436997,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "stx_user_id",
+      "value": "798c6c81-a2f0-404f-9323-d9fea8f0ba20",
+      "domain": ".sharethrough.com",
+      "path": "/",
+      "expires": 1785327495.540261,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "visitor-id",
+      "value": "4244484934472130000V10",
+      "domain": ".media.net",
+      "path": "/",
+      "expires": 1812982890.231081,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "bito",
+      "value": "AAo2iU7UXXIAAABUkeFehg",
+      "domain": ".bidr.io",
+      "path": "/",
+      "expires": 1816819234.474399,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "bitoIsSecure",
+      "value": "ok",
+      "domain": ".bidr.io",
+      "path": "/",
+      "expires": 1815560490.340294,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "uid",
+      "value": "1U8fIG2vhJQ",
+      "domain": ".ad-m.asia",
+      "path": "/",
+      "expires": 1817265636.852958,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ADKUID",
+      "value": "A811284899428529057",
+      "domain": ".adkernel.com",
+      "path": "/",
+      "expires": 1785297636.84837,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "tt_viewer",
+      "value": "3c0a84c3-7112-49b2-97f9-3d5be04bb28e",
+      "domain": ".teads.tv",
+      "path": "/",
+      "expires": 1812896490.642713,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "adxppthrd",
+      "value": "c4976107-ddd3-4b8f-90b7-a2179963d136",
+      "domain": ".docomo.ne.jp",
+      "path": "/",
+      "expires": 1817265635.046688,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "TEST-COOKIE",
+      "value": "YES",
+      "domain": ".inmobi.com",
+      "path": "/",
+      "expires": 1812983480.799587,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "st_uid",
+      "value": "019ec682-65a5-70eb-8c44-95a9fc5ac43a",
+      "domain": ".seedtag.com",
+      "path": "/",
+      "expires": 1813809635.21483,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "TDID",
+      "value": "cf749bc4-4c5e-477a-bc3d-293e1c230670",
+      "domain": ".adsrvr.org",
+      "path": "/",
+      "expires": 1814241634.162588,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "pid",
+      "value": "6963525529794765955",
+      "domain": ".smartadserver.com",
+      "path": "/",
+      "expires": 1789223277.333882,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "gid_CAESEFMoou_aBlzI06Hi8lky6ug",
+      "value": "1",
+      "domain": ".ctnsnet.com",
+      "path": "/",
+      "expires": 1814241632.709952,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_rxuuid",
+      "value": "%7B%22rx_uuid%22%3A%22RX-01370217-664d-4f47-899b-4731681787f0-004%22%7D",
+      "domain": ".1rx.io",
+      "path": "/",
+      "expires": 1812983277.414929,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "uid",
+      "value": "7c-vcmiHgLJHYb7ekCGBSlvfQtU",
+      "domain": ".fout.jp",
+      "path": "/",
+      "expires": 1817265634.344595,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "obuid",
+      "value": "1579cb96-6fc2-474d-a83c-7666a7e7843c",
+      "domain": ".outbrain.com",
+      "path": "/",
+      "expires": 1790481634.852893,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "sa-user-id",
+      "value": "s%3A0-dec31e1c-e1aa-563e-6df5-e561ea5c4745.UQSfP%2BPSn8FLwxefwg2kzaikvNo8sFWfIm6kUy%2B3ZYc",
+      "domain": "sync.srv.stackadapt.com",
+      "path": "/",
+      "expires": 1812983278.147315,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "sa-user-id",
+      "value": "s%3A0-dec31e1c-e1aa-563e-6df5-e561ea5c4745.UQSfP%2BPSn8FLwxefwg2kzaikvNo8sFWfIm6kUy%2B3ZYc",
+      "domain": ".srv.stackadapt.com",
+      "path": "/",
+      "expires": 1812983278.147417,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "sa-user-id-v3",
+      "value": "s%3AAQAKINhbhotNrEkh-2f27nfQ-InsVrOg0zfYYkNcuLdaOhglEAEYAyDx9LrRBjABOgSYhIllQgQI2nZT.VFyJiyPY6iq2Ovn%2BYwbq8nAN%2FyoiKO2lGhXl4z1rkNQ",
+      "domain": "sync.srv.stackadapt.com",
+      "path": "/",
+      "expires": 1812983278.147536,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "sa-user-id-v3",
+      "value": "s%3AAQAKINhbhotNrEkh-2f27nfQ-InsVrOg0zfYYkNcuLdaOhglEAEYAyDx9LrRBjABOgSYhIllQgQI2nZT.VFyJiyPY6iq2Ovn%2BYwbq8nAN%2FyoiKO2lGhXl4z1rkNQ",
+      "domain": ".srv.stackadapt.com",
+      "path": "/",
+      "expires": 1812983278.147577,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "presage-ssp",
+      "value": "%7B%22uuid%22%3A%2256a5a5c6-bbc1-41d9-bb5a-18cfe5a99865%22%7D",
+      "domain": ".presage.io",
+      "path": "/",
+      "expires": 1797258478.175066,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "SOC",
+      "value": "ai66csCo8YsAAPUf7XMAAAAA",
+      "domain": ".socdm.com",
+      "path": "/",
+      "expires": 1817265634.987951,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "viewer_token",
+      "value": "dbc0836f-c5a3-493d-97c8-82093ead7d13",
+      "domain": ".csync.loopme.me",
+      "path": "/",
+      "expires": 1790481636.97482,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "CMID",
+      "value": "ai67OW4sB8MAFz2aFOIyAQAA",
+      "domain": ".casalemedia.com",
+      "path": "/",
+      "expires": 1814241638.306918,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "CMPS",
+      "value": "5919",
+      "domain": ".casalemedia.com",
+      "path": "/",
+      "expires": 1789223477.892944,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "CMPRO",
+      "value": "5919",
+      "domain": ".casalemedia.com",
+      "path": "/",
+      "expires": 1790481638.307032,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "x",
+      "value": "6a2ebb3aac197751090ddb52",
+      "domain": ".advolve.io",
+      "path": "/",
+      "expires": 1814241640.634677,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "KADUSERCOOKIE",
+      "value": "7D6B9962-6350-4670-A04C-36C00C5EDBAB",
+      "domain": ".pubmatic.com",
+      "path": "/",
+      "expires": 1812983480.381327,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ADKUID",
+      "value": "A811284899428529057",
+      "domain": ".voisetech.com",
+      "path": "/",
+      "expires": 1785297638.743342,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "iid",
+      "value": "ID5-3-7158a24f-4c97-4a12-b1b6-c0eeb83126eb",
+      "domain": ".inmobi.com",
+      "path": "/",
+      "expires": 1814241642.700471,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "gob_cookie",
+      "value": "YES",
+      "domain": ".inmobi.com",
+      "path": "/",
+      "expires": 1814241642.700573,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_rxuuid",
+      "value": "%7B%22rx_uuid%22%3A%22RX-01370217-664d-4f47-899b-4731681787f0-004%22%7D",
+      "domain": ".targeting.unrulymedia.com",
+      "path": "/",
+      "expires": 1813125144.57344,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "yuidss",
+      "value": "1675293891781589145",
+      "domain": ".yandex.ru",
+      "path": "/",
+      "expires": 1816149144.92719,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "bh",
+      "value": "EigiTm90L0EpQnJhbmQiO3Y9Ijk5IiwgIkNocm9taXVtIjt2PSIxNDgiKgI/MDoJIldpbmRvd3MiYJnJw9EGah7cyuH/CJLYobEDn8/h6gP7+vDnDev//fYP06DOhwg=",
+      "domain": ".yandex.ru",
+      "path": "/",
+      "expires": 1816149144.927467,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "pi",
+      "value": "uYrZMoJapjfgyuf7r3bPk8thmZ3wmQUPxXhs6unsbCcotdGodLVcnN3tpJnqtw50Ywn5O3izNydgZWFn8aG1rSByZ9s=",
+      "domain": ".yandex.ru",
+      "path": "/",
+      "expires": 1816149144.927344,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None",
+      "partitionKey": "https://naukri.com",
+      "_crHasCrossSiteAncestor": true
+    },
+    {
+      "name": "i",
+      "value": "jjebZMb+BT8FR9ZA/TEQIG++PELuWcOE+l/OXDY+wBFbmywHWKhPi0gqJyHhLJs7b8QRxyaADLnYk52WVhslTZegObg=",
+      "domain": ".yandex.ru",
+      "path": "/",
+      "expires": 1816149144.927383,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "yandexuid",
+      "value": "8953938451781589145",
+      "domain": ".yandex.ru",
+      "path": "/",
+      "expires": 1816149144.927409,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "yashr",
+      "value": "7808800151781589145",
+      "domain": ".yandex.ru",
+      "path": "/",
+      "expires": 1813125144.927433,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None",
+      "partitionKey": "https://naukri.com",
+      "_crHasCrossSiteAncestor": true
+    },
+    {
+      "name": "_ga_K2YBNZVRLL",
+      "value": "deleted",
+      "domain": ".www.naukri.com",
+      "path": "/",
+      "expires": 1817287210.517664,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "uid",
+      "value": "3512554604607003194",
+      "domain": ".turn.com",
+      "path": "/",
+      "expires": 1797183083.048134,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "TR",
+      "value": "917a00ce97ca1013207cb03d0a37e7b09916137dec58bf99",
+      "domain": ".send.microad.jp",
+      "path": "/",
+      "expires": 1790510450.512492,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ssi",
+      "value": "588cb5c1-32be-40b0-a58b-855950bbf332#1781631084496",
+      "domain": ".sitescout.com",
+      "path": "/",
+      "expires": 1813167083.41296,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "OAU",
+      "value": "OPU14cde9eeed6d4a3cbb59b79baf9907dc",
+      "domain": ".opera.com",
+      "path": "/",
+      "expires": 1813168566.00546,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "visitor",
+      "value": "a130d733-4f7e-45dd-8486-7a08425cd115",
+      "domain": ".postrelease.com",
+      "path": "/",
+      "expires": 1813168565.089871,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "status",
+      "value": "0",
+      "domain": ".postrelease.com",
+      "path": "/",
+      "expires": 1813168565.090026,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_ssuma",
+      "value": "eyI2OCI6MTc4MTYzMTA4NDgxNn0",
+      "domain": ".sitescout.com",
+      "path": "/",
+      "expires": 1784223083.413671,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "XA",
+      "value": "0mqh151l3323c&sd=A&t=1781631084&u=1781631084&v=1",
+      "domain": ".yahoo.co.jp",
+      "path": "/",
+      "expires": 1813167083.453528,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "XB",
+      "value": "32cd15d0-69a9-11f1-b7fb-a3101d2fcc2e&v=6&u=1781631084&s=4r",
+      "domain": ".yahoo.co.jp",
+      "path": "/",
+      "expires": 1816191083.454416,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ASR-g",
+      "value": "1",
+      "domain": ".send.microad.jp",
+      "path": "/",
+      "expires": 1782842164.978658,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ver",
+      "value": "1",
+      "domain": ".postrelease.com",
+      "path": "/",
+      "expires": 1813168565.0901,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "test",
+      "value": "naukri.com",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1816216845.516496,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "ar_debug",
+      "value": "1",
+      "domain": ".doubleclick.net",
+      "path": "/",
+      "expires": 1785299448.615363,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "XANDR_PANID",
+      "value": "KWTHXXc62snHLs_65AukHBrJPz6Q6vAaiSqboGLzpAAVOSMpmndXHJ23G4fw0ddlJg7xNvuMEBjBJt-TUftonU33sKD4rdw0YmVB0yMi8F0.",
+      "domain": ".adnxs.com",
+      "path": "/",
+      "expires": 1789433204.381691,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None",
+      "partitionKey": "https://naukri.com",
+      "_crHasCrossSiteAncestor": true
+    },
+    {
+      "name": "uuid2",
+      "value": "7973299628879618726",
+      "domain": ".adnxs.com",
+      "path": "/",
+      "expires": 1789433204.381914,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "anj",
+      "value": "dTM7k!M41.D>6NRF']wIg2IlgFI+JM!@wnfH8K6pQK`!5=E<*L5?%M<X^RQ5h-OSm2%lvjg>P6_1=T6H:/`G'nyuEt*bpRz*qF1`*b_P<*3>N=",
+      "domain": ".adnxs.com",
+      "path": "/",
+      "expires": 1789433204.381846,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_ga_K2YBNZVRLL",
+      "value": "deleted",
+      "domain": "www.naukri.com",
+      "path": "/",
+      "expires": 1817287210.5181,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_gcl_au",
+      "value": "1.1.1603059188.1781446853.1821109070.1781848598.1781852776",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1789222853,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "lum",
+      "value": "CK7tpIzxMxIFCAEQqAE",
+      "domain": ".ladsp.com",
+      "path": "/",
+      "expires": 1817265632.708413,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "cid",
+      "value": "d55592e55a90472a82ebcb65f9cd2a84",
+      "domain": ".ctnsnet.com",
+      "path": "/",
+      "expires": 1814241632.710093,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "sp",
+      "value": "CggI2WUSAxDDEg==",
+      "domain": ".quantserve.com",
+      "path": "/",
+      "expires": 1790481634.103709,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "TDCPM",
+      "value": "CAESFQoGZ29vZ2xlEgsI5KH_jaDnqj8QBRgBIAEoAjILCOySgru256o_EAU4AVoGZ29vZ2xlYAI.",
+      "domain": ".adsrvr.org",
+      "path": "/",
+      "expires": 1814241634.162779,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "cto_bundle",
+      "value": "omHa3l9pWjluN1V6RWRxQnlpRm0zcG5UZ0RHSklMdFVwVFN4cUoyJTJGSlBnVkN4a3p0azdsVTdSODRkOTNwT0JkQklBazlYbkdJOHdDanJIcm1kbktxTFZEJTJCb0tMZ0lzRU5yVHNFRGVqOWFvMmIwTTJiWGxHcmE0cW05RkQlMkZsVFJnSXM2WmZaamdYcDFqJTJGNSUyQjQyMFZMZ3FCMWZnJTNEJTNE",
+      "domain": ".criteo.com",
+      "path": "/",
+      "expires": 1816401634.200138,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None",
+      "partitionKey": "https://naukri.com",
+      "_crHasCrossSiteAncestor": true
+    },
+    {
+      "name": "IDSYNC",
+      "value": "19h1~2ws3",
+      "domain": ".analytics.yahoo.com",
+      "path": "/",
+      "expires": 1814241634.21932,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "u",
+      "value": "1782705635",
+      "domain": ".uncn.jp",
+      "path": "/",
+      "expires": 1814241634.668052,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "data-g",
+      "value": "CAESEOZPy7UhXDrzFv-I90ol-c4~~3",
+      "domain": ".media.net",
+      "path": "/",
+      "expires": 1783915234.675687,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "cu",
+      "value": "aa49f97b-6eba-4cba-b694-89702eee4ff6|1782705635223",
+      "domain": ".ipredictive.com",
+      "path": "/",
+      "expires": 1814241634.904045,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "uids",
+      "value": "H4sIAAAAAAAE_wTASwrDIBAG4Lv8awUnGZ3HbTqokF2gBFLEu_dbeK7-hS-YwRfGe8NJtLWzqHHCc3U4KvVZjSLXJpHZgrPaLPk4qfRBM4YE9k6I_vnBSZSYmxonjPeGk6io1KOU_Q8AAP__4TFYOHIAAAA=",
+      "domain": ".4dex.io",
+      "path": "/",
+      "expires": 1787875200.301295,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ANON_ID",
+      "value": "aCntAZcO5nP87PRo7TGr73cflh4jkaGSvpCBmUsPCyBqaaHanmVQZa3VrDjHTnrNcBR69R3j5tHLVrJ25WTE43Rb1Zbvej4AplM",
+      "domain": ".tribalfusion.com",
+      "path": "/",
+      "expires": 1790481636.435817,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "lidc",
+      "value": "\"b=TGST00:s=T:r=T:a=T:p=T:g=3930:u=1:x=1:i=1782705636:t=1782792036:v=2:sig=AQFhKHJdLm3Hc9Y_CfCDgTMw30Xok9nC\"",
+      "domain": ".linkedin.com",
+      "path": "/",
+      "expires": 1782792036.533011,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "mlcwc",
+      "value": "eyJ2ZXJzaW9uIjoxLCJwYXlsb2FkIjoiYytnWHVUTzhJQ0pFQTkrODkwVWoyTGV0eEdCQXduWnJQNEpnRVV1WjhVZTFWSlg4UWIrNVJUanpteGUvMzNJeWVtRmpYNmVlS29TeHhuT0xnZmQ3UTNUMEN2RmtrdDRYTnRzeTBZRzF6WTQ5UWd5OUZ2L25wNUZxNUlaR0NYSmNPWDJVSzF0SDhibGdlQTdWSktUTDBXT0F5a1ZsbXQyeUYxd2hycXdyM1ByUnRIVmoxYkdUNHkveG1nY2lnZ3ZKbmh3cnJmWlFYb015ejFFTGJRODlxVkIrdlFlMFZja0psSUxMTXc0RFBjVmdiSW89Iiwibm9uY2UiOiJDeTdxZC95T25OV0d3bE9GIn0",
+      "domain": ".moloco.com",
+      "path": "/",
+      "expires": 1814241636.604669,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_tracker",
+      "value": "%7B%22UUID%22%3A%22F5E5F2F4-7DB9-4268-06C0-F9DA8BC55268%22%7D",
+      "domain": "ads.travelaudience.com",
+      "path": "/",
+      "expires": 1816833635.687523,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ADK_EX_11",
+      "value": "1",
+      "domain": ".adkernel.com",
+      "path": "/",
+      "expires": 1783915236.848297,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ADK_EX_1215",
+      "value": "1",
+      "domain": ".voisetech.com",
+      "path": "/",
+      "expires": 1783915238.743262,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "sa-user-id-v2",
+      "value": "s%3A3sMeHOGqVj5t9eVh6lxHRbdSAfk.D5NtZvpJ5DgQOsV53ehxbFCytK0Onr1yz9DXU5K%2BC0Y",
+      "domain": "sync.srv.stackadapt.com",
+      "path": "/",
+      "expires": 1814241638.994511,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "sa-user-id-v2",
+      "value": "s%3A3sMeHOGqVj5t9eVh6lxHRbdSAfk.D5NtZvpJ5DgQOsV53ehxbFCytK0Onr1yz9DXU5K%2BC0Y",
+      "domain": ".srv.stackadapt.com",
+      "path": "/",
+      "expires": 1814241638.994621,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "csync",
+      "value": "188:1",
+      "domain": ".smartadserver.com",
+      "path": "/",
+      "expires": 1785327495.712408,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "IDE",
+      "value": "AHWqTUkba_nrWw9Qb9YD8lJUNLzc5vUQUtZqhDXEMpGNQ1sWOTuuttX-TZm_KF8lUwM",
+      "domain": ".doubleclick.net",
+      "path": "/",
+      "expires": 1817295625.509271,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "nauk_at",
+      "value": "eyJraWQiOiIzIiwidHlwIjoiSldUIiwiYWxnIjoiUlM1MTIifQ.eyJkZXZpY2VUeXBlIjoiZDNza3QwcCIsInVkX3Jlc0lkIjoyNzk1OTA4ODIsInN1YiI6IjI5MDY1Mjc2OCIsInVkX3VzZXJuYW1lIjoiamFpdGVqNzkwQGdtYWlsLmNvbSIsInVkX2lzRW1haWwiOnRydWUsImlzcyI6IkluZm9FZGdlIEluZGlhIFB2dC4gTHRkLiIsInVzZXJBZ2VudCI6Ik1vemlsbGEvNS4wIChXaW5kb3dzIE5UIDEwLjA7IFdpbjY0OyB4NjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8xNDguMC4wLjAgU2FmYXJpLzUzNy4zNiIsImlwQWRyZXNzIjoiMjQwNToyMDE6YzAwOToyODk4OjM0OWQ6YzdiODozMGZlOmMyOGEiLCJ1ZF9pc1RlY2hPcHNMb2dpbiI6ZmFsc2UsInVzZXJJZCI6MjkwNjUyNzY4LCJzdWJVc2VyVHlwZSI6IiIsInVzZXJTdGF0ZSI6IkFVVEhFTlRJQ0FURUQiLCJ1ZF9pc1BhaWRDbGllbnQiOmZhbHNlLCJ1ZF9lbWFpbFZlcmlmaWVkIjp0cnVlLCJ1c2VyVHlwZSI6ImpvYnNlZWtlciIsInNlc3Npb25TdGF0VGltZSI6IjIwMjYtMDYtMTRUMTk6NTE6MjUiLCJ1ZF9lbWFpbCI6ImphaXRlajc5MEBnbWFpbC5jb20iLCJ1c2VyUm9sZSI6InVzZXIiLCJleHAiOjE3ODI3NDcwMzYsInRva2VuVHlwZSI6ImFjY2Vzc1Rva2VuIiwiaWF0IjoxNzgyNzQzNDM2LCJqdGkiOiI3ZTEwODVhZjU5MGY0MTQyOGQ1ZDNmN2Q3NDU5Y2MzOCIsInBvZElkIjoicHJvZC01YmJjNmJiNTliLWtibjVjIn0.BRNNZXbesTatPi2vfa9m0Qe4O5xOciMIQgUmLYAn6D3dG6Ycnrpz5h26kogbEJiZ9rmqlGsJxJ9Yd2fXq6Rl0eZBkWxiSNynVECJMcIy_Myt3DGm-1KFl6d81QPBhlQD7QY2zdpSYqeW3yWbJZ_SjSPodR1rlw-WoJSdt9AoXJYhtQBN1JeHQgu5DT7AESelE_RsnH-Jdq064_-uCLZtWHO8Cy3SfUSHPULIlF4wvYisOKOZr1zfC76dcvIhxWs57LrBQxWL5zuc0AkuQyILme9e4lAYpmvvO4aaR45uRrhjygw9xsADBC1PprjadLONGxWOkbUGl1Eojc43MhSePQ",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1782747036.168134,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "is_login",
+      "value": "1",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1782747036.168781,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "ak_bmsc",
+      "value": "5506401DE9F69E489F46DEF732BC824C~000000000000000000000000000000~YAAQ1elUuAF/G9meAQAAag/LEwDpjz98qLqEkmep3irXo1+MX8TGtpLUNEtZElplS8vkzXJMB5B4nRX7jmCrQ87rraHg4agddjJQnyxEiLsmY1WO1mhvu88LTQJGs78I3HteGRI6dEi+kvV6HF8ispTPUc/RKooaHjYeJlJNRN10GrUbJxVGhgEpwaT+jVVGyWcPFY2qKJH62/Db68dAdFpaXfuLzxf9IM2qG3t0eFhvjYtg8yLhU+coEAR0t1DPcKV9F77lhYRKek1RE58X6llxUxRVNjvAuVED4MVHRimrQN2rYmwIJzlOHGeZxjNefIPkhtQFtwaB0yOx88USR5xFJDkZaiNsf41IUsw6W3O8cMYJrbfusiSC0tOD9Sya6wJhIon64dzRdWWiuyUEeH+ATsznGnhxuPOHFhYuuD2BoN0C2wyhQ3P1/cCEvJSDF17i1md4NtkgohnRk5vXuScVv3rf44mEwSnTDCzmnahOcRcy6Q9JtO9/qJHdmGxzS25HjMeNaQ==",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1782750635.843206,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "nauk_cs",
+      "value": "1087",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1814281218.268626,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "__gads",
+      "value": "ID=a0367d4c88291787:T=1781446890:RT=1782745224:S=ALNI_MYGotEBoogaraVwfkkfwwtvRzJH7A",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1815142890,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "__gpi",
+      "value": "UID=0000146a8c29d014:T=1781446890:RT=1782745224:S=ALNI_MYLF3nIjSNozBxcOllyocLoeYkyCw",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1815142890,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "__eoi",
+      "value": "ID=557c0530618acb2f:T=1781446890:RT=1782745224:S=AA-AfjZ8KUcVWtKMPlYSAtASAoZv",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1796998890,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "bm_sv",
+      "value": "800583166AA2C4F3F30CD4BFF3683FA8~YAAQiZUjF0PK4AafAQAABjzmEwDlEJdwIycBNPKkdA/rEuXiq3zTVsoM2BPgX0GHvaimf+YJ/go6UZAZ/BU3FcylDNggpSWtCftnIgoUMve9lxtqBv5aLGWP4ztgofjipUvlPxUrTJZACSqWaFHEwuz7fbtEN8ciKsBoZlFNXUvHGhYTU2PhAM4MENHzGG8rLmpJOzysp7uFSZL/LaGfJ42frDYSd1Z9fw2UImI6G4uwb1TUOr6ACQBm3ey5F6cqrRs=~1",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1782750638.945477,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_ga_K2YBNZVRLL",
+      "value": "GS2.1.s1782743438$o2$g1$t1782745288$j53$l0$h0",
+      "domain": ".naukri.com",
+      "path": "/",
+      "expires": 1817305288.171649,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}
